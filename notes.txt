@@ -1,0 +1,17 @@
+resolution controled by dx,dy,dt.
+xmax = 1
+ymax,zmax can be as small as 3 grid points.
+If I change resolution, must change domain size in y and z proportionally.
+
+Very nonlinnear, should not expect amplitude of 0.1 to survive very
+long. If there's a problem, reduce more.
+
+Test many resolutions look for 4th order convergence.
+Plot h^4 * error. curves should overlap in 1 time crossing
+
+Run for many crossing times: then phase error may accumulate.
+
+
+Start with 20 grid points as resolution.
+
+For large resolution, reduce amount of output. Output is very slow.
