@@ -51,12 +51,12 @@ CoordBase::ymin                         = 0.0
 CoordBase::zmin                         = 0.0
 
 CoordBase::xmax                         = 1.0
-CoordBase::ymax                         = 6.0
-CoordBase::zmax                         = 6.0
+CoordBase::ymax                         = 0.015
+CoordBase::zmax                         = 0.015
 
 CoordBase::dx                           = 0.005
-CoordBase::dy                           = 0.1
-CoordBase::dz                           = 0.1
+CoordBase::dy                           = 0.005
+CoordBase::dz                           = 0.005
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -79,7 +79,7 @@ Periodic::periodic                      = "yes"
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 1.0
+Cactus::cctk_final_time                 = 100.0
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
