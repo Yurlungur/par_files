@@ -185,3 +185,5 @@ IOASCII::out1D_vars                     = "
    ADMBase::shift
    ADMBase::dtshift
 "
+# The timer output
+Cactus::cctk_tigmer_output = "full"

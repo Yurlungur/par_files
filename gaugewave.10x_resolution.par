@@ -141,7 +141,8 @@ IO::out_dir                             = $parfile
 
 IOBasic::outInfo_every                  = 1
 IOBasic::outInfo_vars                   = "
-   ADMBase::gxx
+  ADMBase::gxx
+  ADMBase::kxx
 "
 
 IOScalar::outScalar_every               = 10
@@ -185,3 +186,5 @@ IOASCII::out1D_vars                     = "
    ADMBase::shift
    ADMBase::dtshift
 "
+# The timer output
+Cactus::cctk_tigmer_output = "full"
