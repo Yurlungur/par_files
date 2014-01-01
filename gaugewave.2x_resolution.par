@@ -79,7 +79,7 @@ Periodic::periodic                      = "yes"
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 100.0
+Cactus::cctk_final_time                 = 1.0
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
@@ -97,7 +97,7 @@ ADMBase::initial_shift                  = "GaugeWave"
 ADMBase::initial_dtlapse                = "GaugeWave"
 ADMBase::initial_dtshift                = "GaugeWave"
 
-GaugeWave::amp                          = 0.1
+GaugeWave::amp                          = 0.01
 GaugeWave::period                       = 1.0
 
 #############################################################
@@ -185,3 +185,5 @@ IOASCII::out1D_vars                     = "
    ADMBase::shift
    ADMBase::dtshift
 "
+# The timer output
+Cactus::cctk_timer_output = "full"
