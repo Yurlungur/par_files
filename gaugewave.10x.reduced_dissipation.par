@@ -80,7 +80,7 @@ Periodic::periodic                      = "yes"
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 1
+Cactus::cctk_final_time                 = 0.25
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
@@ -121,7 +121,7 @@ ML_BSSN::ShiftAdvectionCoeff = 1.0
 ML_BSSN::MinimumLapse        = 1.0e-8
 
 Dissipation::order = 5
-# Dissipation::epsdis = 0.02
+Dissipation::epsdis = 0.02
 Dissipation::vars  = "
    ML_BSSN::ML_log_confac
    ML_BSSN::ML_metric

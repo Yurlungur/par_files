@@ -52,12 +52,12 @@ CoordBase::ymin                         = 0.0
 CoordBase::zmin                         = 0.0
 
 CoordBase::xmax                         = 1.0
-CoordBase::ymax                         = 0.03
-CoordBase::zmax                         = 0.03
+CoordBase::ymax                         = 0.15
+CoordBase::zmax                         = 0.15
 
-CoordBase::dx                           = 0.01
-CoordBase::dy                           = 0.01
-CoordBase::dz                           = 0.01
+CoordBase::dx                           = 0.05
+CoordBase::dy                           = 0.05
+CoordBase::dz                           = 0.05
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -80,7 +80,7 @@ Periodic::periodic                      = "yes"
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 1
+Cactus::cctk_final_time                 = 0.25
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
@@ -98,7 +98,7 @@ ADMBase::initial_shift                  = "GaugeWave"
 ADMBase::initial_dtlapse                = "GaugeWave"
 ADMBase::initial_dtshift                = "GaugeWave"
 
-GaugeWave::amp                          = 0.01
+GaugeWave::amp                          = 0.001
 GaugeWave::period                       = 1.0
 
 #############################################################
@@ -121,7 +121,7 @@ ML_BSSN::ShiftAdvectionCoeff = 1.0
 ML_BSSN::MinimumLapse        = 1.0e-8
 
 Dissipation::order = 5
-# Dissipation::epsdis = 0.02
+Dissipation::epsdis = 0.02
 Dissipation::vars  = "
    ML_BSSN::ML_log_confac
    ML_BSSN::ML_metric
@@ -143,8 +143,7 @@ IO::out_dir                             = $parfile
 
 IOBasic::outInfo_every                  = 1
 IOBasic::outInfo_vars                   = "
-  ADMBase::gxx
-  ADMBase::kxx
+   ADMBase::gxx
 "
 
 IOScalar::outScalar_every               = 10
@@ -193,3 +192,4 @@ Cactus::cctk_timer_output = "full"
 TimerReport::out_every = 10
 Carpet::output_timers_every = 10
 CarpetLib::print_timestats_every = 10
+
