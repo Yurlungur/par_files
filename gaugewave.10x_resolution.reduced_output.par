@@ -29,6 +29,7 @@ ActiveThorns = "
    StaticConformal
    Time
    TmunuBase
+   TimerReport
 "
 
 #############################################################
@@ -162,4 +163,7 @@ IOASCII::out1D_vars                     = "
    ADMBase::kzz
 "
 # The timer output
-Cactus::cctk_tigmer_output = "full"
+Cactus::cctk_timer_output = "full"
+TimerReport::out_every = 10
+Carpet::output_timers_every = 10
+CarpetLib::print_timestats_every = 10
