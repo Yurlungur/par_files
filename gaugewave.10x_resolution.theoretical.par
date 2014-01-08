@@ -1,0 +1,154 @@
+ActiveThorns = "
+   ADMBase
+   ADMCoupling
+   ADMMacros
+   Boundary
+   Carpet
+   CarpetIOBasic
+   CarpetIOASCII
+   CarpetIOScalar
+   CarpetLib
+   CarpetReduce
+   CartGrid3D
+   CoordBase
+   CoordGauge
+   GaugeWave
+   GenericFD
+   IOUtil
+   InitBase
+   LoopControl
+   SpaceMask
+   SphericalSurface
+   SymBase
+   Periodic
+   Slab
+   StaticConformal
+   Time
+   TmunuBase
+   TimerReport
+"
+
+#############################################################
+# Grid
+#############################################################
+
+Carpet::ghost_size                      = 3
+Carpet::domain_from_coordbase           = "yes"
+Carpet::init_each_timelevel             = "yes"
+Carpet::poison_new_timelevels           = yes
+
+CoordBase::domainsize                   = minmax
+
+CartGrid3D::type                        = "coordbase"
+CartGrid3D::domain                      = "full"
+CartGrid3D::avoid_origin                = "no"
+
+CoordBase::xmin                         = 0.0
+CoordBase::ymin                         = 0.0
+CoordBase::zmin                         = 0.0
+
+CoordBase::xmax                         = 1.0
+CoordBase::ymax                         = 0.03
+CoordBase::zmax                         = 0.03
+
+CoordBase::dx                           = 0.01
+CoordBase::dy                           = 0.01
+CoordBase::dz                           = 0.01
+
+CoordBase::boundary_size_x_lower        = 3
+CoordBase::boundary_size_y_lower        = 3
+CoordBase::boundary_size_z_lower        = 3
+CoordBase::boundary_size_x_upper        = 3
+CoordBase::boundary_size_y_upper        = 3
+CoordBase::boundary_size_z_upper        = 3
+
+CoordBase::boundary_shiftout_x_lower    = 1
+CoordBase::boundary_shiftout_y_lower    = 1
+CoordBase::boundary_shiftout_z_lower    = 1
+CoordBase::boundary_shiftout_x_upper    = 0
+CoordBase::boundary_shiftout_y_upper    = 0
+CoordBase::boundary_shiftout_z_upper    = 0
+
+Periodic::periodic                      = "yes"
+
+#############################################################
+# Time integration
+#############################################################
+
+Cactus::terminate                       = "time"
+Cactus::cctk_final_time                 = 0.05
+
+Time::dtfac                             = 0.005
+
+#############################################################
+# Initial condition
+#############################################################
+
+ADMBase::initial_data                   = "GaugeWave"
+ADMBase::initial_lapse                  = "GaugeWave"
+ADMBase::initial_shift                  = "GaugeWave"
+ADMBase::initial_dtlapse                = "GaugeWave"
+ADMBase::initial_dtshift                = "GaugeWave"
+
+GaugeWave::amp                          = 0.01
+GaugeWave::period                       = 1.0
+
+#############################################################
+# Time evolution
+#############################################################
+
+ADMBase::evolution_method               = "GaugeWave"
+
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir                             = $parfile
+
+IOBasic::outInfo_every                  = 1
+IOBasic::outInfo_vars                   = "
+   ADMBase::gxx
+   ADMBase::kxx
+"
+
+IOScalar::outScalar_every               = 1
+IOScalar::one_file_per_group            = yes
+IOScalar::outScalar_vars                = "
+   ADMBase::gxx
+   ADMBase::gxy
+   ADMBase::gxz
+   ADMBase::gyy
+   ADMBase::gyz
+   ADMBase::gzz
+   ADMBase::kxx
+   ADMBase::kxy
+   ADMBase::kxz
+   ADMBase::kyy
+   ADMBase::kyz
+   ADMBase::kzz
+   ADMBase::lapse
+   ADMBase::dtlapse
+   ADMBase::shift
+   ADMBase::dtshift
+"
+
+IOASCII::out1D_every                    = 1
+IOASCII::one_file_per_group             = yes
+IOASCII::out1D_vars                     = "
+   ADMBase::gxx
+   ADMBase::gxy
+   ADMBase::gxz
+   ADMBase::gyy
+   ADMBase::gyz
+   ADMBase::gzz
+   ADMBase::kxx
+   ADMBase::kxy
+   ADMBase::kxz
+   ADMBase::kyy
+   ADMBase::kyz
+   ADMBase::kzz
+   ADMBase::lapse
+   ADMBase::dtlapse
+   ADMBase::shift
+   ADMBase::dtshift
+"
