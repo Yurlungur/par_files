@@ -78,7 +78,8 @@ Periodic::periodic                      = "yes"
 Cactus::terminate                       = "time"
 Cactus::cctk_final_time                 = 0.05
 
-Time::dtfac                             = 0.005
+Time::timestep                          = 0.005
+#Time::dtfac                             = 0.005
 
 #############################################################
 # Initial condition

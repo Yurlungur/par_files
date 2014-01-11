@@ -111,8 +111,8 @@ ADMBase::shift_evolution_method         = "ML_BSSN"
 ADMBase::dtlapse_evolution_method       = "ML_BSSN"
 ADMBase::dtshift_evolution_method       = "ML_BSSN"
 
-ML_BSSN::harmonicN           = 1      # 1+log
-ML_BSSN::harmonicF           = 2.0    # 1+log
+ML_BSSN::harmonicN           = 2.0    # harmonic
+ML_BSSN::harmonicF           = 1.0    # harmonic
 ML_BSSN::ShiftGammaCoeff     = 0.75
 ML_BSSN::BetaDriver          = 1.0
 ML_BSSN::LapseAdvectionCoeff = 1.0

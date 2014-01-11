@@ -112,9 +112,9 @@ ADMBase::dtlapse_evolution_method       = "ML_BSSN"
 ADMBase::dtshift_evolution_method       = "ML_BSSN"
 
 
-# f(alpha) := harmonic_f_alpha^(N+1) or (N-1)
-ML_BSSN::harmonicN           = 2.0      # 1+log # Needs to be 0,1,or 2
-ML_BSSN::harmonicF           = 1.0    # 1+log # needs to be set to 1
+# f(alpha) := harmonicF * alpha^harmonicN 
+ML_BSSN::harmonicN           = 2.0    # harmonic
+ML_BSSN::harmonicF           = 1.0    # harmonic
 ML_BSSN::ShiftGammaCoeff     = 0.75
 ML_BSSN::BetaDriver          = 1.0
 ML_BSSN::LapseAdvectionCoeff = 1.0
