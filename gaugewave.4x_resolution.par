@@ -98,7 +98,7 @@ ADMBase::initial_shift                  = "GaugeWave"
 ADMBase::initial_dtlapse                = "GaugeWave"
 ADMBase::initial_dtshift                = "GaugeWave"
 
-GaugeWave::amp                          = 0.001
+GaugeWave::amp                          = 0.01
 GaugeWave::period                       = 1.0
 
 #############################################################

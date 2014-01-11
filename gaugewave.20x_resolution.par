@@ -80,7 +80,7 @@ Periodic::periodic                      = "yes"
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 100.0
+Cactus::cctk_final_time                 = 1.0
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
