@@ -48,12 +48,12 @@ CoordBase::ymin                         = 0.0
 CoordBase::zmin                         = 0.0
 
 CoordBase::xmax                         = 1.0
-CoordBase::ymax                         = 0.03
-CoordBase::zmax                         = 0.03
+CoordBase::ymax                         = 0.0375
+CoordBase::zmax                         = 0.0375
 
-CoordBase::dx                           = 0.01
-CoordBase::dy                           = 0.01
-CoordBase::dz                           = 0.01
+CoordBase::dx                           = 0.0125
+CoordBase::dy                           = 0.0125
+CoordBase::dz                           = 0.0125
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
