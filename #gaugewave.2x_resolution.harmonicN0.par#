@@ -52,12 +52,12 @@ CoordBase::ymin                         = 0.0
 CoordBase::zmin                         = 0.0
 
 CoordBase::xmax                         = 1.0
-CoordBase::ymax                         = 0.075
-CoordBase::zmax                         = 0.075
+CoordBase::ymax                         = 0.15
+CoordBase::zmax                         = 0.15
 
-CoordBase::dx                           = 0.025
-CoordBase::dy                           = 0.025
-CoordBase::dz                           = 0.025
+CoordBase::dx                           = 0.05
+CoordBase::dy                           = 0.05
+CoordBase::dz                           = 0.05
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -80,7 +80,7 @@ Periodic::periodic                      = "yes"
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 0.25
+Cactus::cctk_final_time                 = 1.0
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
@@ -98,7 +98,7 @@ ADMBase::initial_shift                  = "GaugeWave"
 ADMBase::initial_dtlapse                = "GaugeWave"
 ADMBase::initial_dtshift                = "GaugeWave"
 
-GaugeWave::amp                          = 0.01
+GaugeWave::amp                          = 0.001
 GaugeWave::period                       = 1.0
 
 #############################################################
@@ -111,8 +111,9 @@ ADMBase::shift_evolution_method         = "ML_BSSN"
 ADMBase::dtlapse_evolution_method       = "ML_BSSN"
 ADMBase::dtshift_evolution_method       = "ML_BSSN"
 
-ML_BSSN::harmonicN           = 2.0    # harmonic
-ML_BSSN::harmonicF           = 1.0    # harmonic
+ML_BSSN::harmonicN           = 2.0    # Harmonic
+ML_BSSN::harmonicF           = 1.0    # Harmonic
+ML_BSSN::ShiftGammaCoeff     = 0.75
 ML_BSSN::BetaDriver          = 1.0
 ML_BSSN::LapseAdvectionCoeff = 1.0
 ML_BSSN::ShiftAdvectionCoeff = 1.0
@@ -190,3 +191,4 @@ Cactus::cctk_timer_output = "full"
 TimerReport::out_every = 10
 Carpet::output_timers_every = 10
 CarpetLib::print_timestats_every = 10
+

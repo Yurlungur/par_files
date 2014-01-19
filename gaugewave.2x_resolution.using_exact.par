@@ -13,7 +13,6 @@ ActiveThorns = "
    CoordBase
    CoordGauge
    Dissipation
-   GaugeWave
    GenericFD
    IOUtil
    InitBase
@@ -30,6 +29,7 @@ ActiveThorns = "
    Time
    TmunuBase
    TimerReport
+   Exact
 "
 
 #############################################################
@@ -52,12 +52,12 @@ CoordBase::ymin                         = 0.0
 CoordBase::zmin                         = 0.0
 
 CoordBase::xmax                         = 1.0
-CoordBase::ymax                         = 0.075
-CoordBase::zmax                         = 0.075
+CoordBase::ymax                         = 0.15
+CoordBase::zmax                         = 0.15
 
-CoordBase::dx                           = 0.025
-CoordBase::dy                           = 0.025
-CoordBase::dz                           = 0.025
+CoordBase::dx                           = 0.05
+CoordBase::dy                           = 0.05
+CoordBase::dz                           = 0.05
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -92,14 +92,17 @@ Time::dtfac                             = 0.25
 # Initial condition
 #############################################################
 
-ADMBase::initial_data                   = "GaugeWave"
-ADMBase::initial_lapse                  = "GaugeWave"
-ADMBase::initial_shift                  = "GaugeWave"
-ADMBase::initial_dtlapse                = "GaugeWave"
-ADMBase::initial_dtshift                = "GaugeWave"
+ADMBase::initial_data                   = "exact"
+ADMBase::initial_lapse                  = "exact"
+ADMBase::initial_shift                  = "exact"
+ADMBase::initial_dtlapse                = "exact"
+ADMBase::initial_dtshift                = "exact"
 
-GaugeWave::amp                          = 0.01
-GaugeWave::period                       = 1.0
+Exact::exact_model = "Minkowski/gauge wave"
+Exact::Minkowski_gauge_wave__what_fn   = "expsin"
+Exact::Minkowski_gauge_wave__amplitude = 0.01
+Exact::Minkowski_gauge_wave__lambda = 1
+Exact::Minkowski_gauge_wave__phase = 0
 
 #############################################################
 # Time evolution
@@ -111,13 +114,15 @@ ADMBase::shift_evolution_method         = "ML_BSSN"
 ADMBase::dtlapse_evolution_method       = "ML_BSSN"
 ADMBase::dtshift_evolution_method       = "ML_BSSN"
 
-ML_BSSN::harmonicN           = 2.0    # harmonic
-ML_BSSN::harmonicF           = 1.0    # harmonic
-ML_BSSN::BetaDriver          = 1.0
-ML_BSSN::LapseAdvectionCoeff = 1.0
-ML_BSSN::ShiftAdvectionCoeff = 1.0
-
-ML_BSSN::MinimumLapse        = 1.0e-8
+ML_BSSN::ML_log_confac_bound = "none"
+ML_BSSN::ML_metric_bound     = "none"
+ML_BSSN::ML_Gamma_bound      = "none"
+ML_BSSN::ML_trace_curv_bound = "none"
+ML_BSSN::ML_curv_bound       = "none"
+ML_BSSN::ML_lapse_bound      = "none"
+ML_BSSN::ML_dtlapse_bound    = "none"
+ML_BSSN::ML_shift_bound      = "none"
+ML_BSSN::ML_dtshift_bound    = "none"
 
 Dissipation::order = 5
 Dissipation::vars  = "
@@ -190,3 +195,4 @@ Cactus::cctk_timer_output = "full"
 TimerReport::out_every = 10
 Carpet::output_timers_every = 10
 CarpetLib::print_timestats_every = 10
+
