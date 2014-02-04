@@ -1,40 +1,65 @@
+Cactus::cctk_run_title = "Robust Stability Test"
+
+############################################################
+# Thorns
+############################################################
+# Important core tools
+ActiveThorns = "
+   Slab
+   Time
+"
+# The ADM variables
 ActiveThorns = "
    ADMBase
    ADMCoupling
    ADMMacros
-   Boundary
+   CoordBase
+   StaticConformal
+   TmunuBase
+" 
+# Boundary data thorns
+ActiveThorns = "Boundary Periodic"
+# Grid data
+ActiveThorns = "
    Carpet
-   CarpetIOBasic
-   CarpetIOASCII
-   CarpetIOScalar
    CarpetLib
    CarpetReduce
    CartGrid3D
-   CoordBase
-   CoordGauge
-   Dissipation
-   GaugeWave
-   GenericFD
-   IOUtil
-   InitBase
+   Periodic
    LoopControl
+   SymBase
+"
+# Initial Data
+ActiveThorns = "
+   InitBase
+"
+# Time integration
+ActiveThorns = "
    ML_BSSN
    ML_BSSN_Helper
    MoL
-   SpaceMask
-   SphericalSurface
-   SymBase
-   Periodic
-   Slab
-   StaticConformal
-   Time
-   TmunuBase
-   TimerReport
 "
+# Noise
+ActiveThorns = "Noise"
+# Output
+ActiveThorns = "
+   CarpetIOBasic
+   CarpetIOASCII
+   CarpetIOScalar
+   IOUtil
+"
+# I don't know what these thorns do
+ActiveThorns = "
+   CoordGauge
+   GenericFD
+   SpaceMask
+"
+# ----------------------------------------------------------
 
-#############################################################
+
+############################################################
 # Grid
-#############################################################
+############################################################
 
 Carpet::ghost_size                      = 3
 Carpet::domain_from_coordbase           = "yes"
@@ -52,9 +77,10 @@ CoordBase::ymin                         = 0.0
 CoordBase::zmin                         = 0.0
 
 CoordBase::xmax                         = 1.0
-CoordBase::ymax                         = 0.15
-CoordBase::zmax                         = 0.15
+CoordBase::ymax                         = 1.0
+CoordBase::zmax                         = 1.0
 
+# 20 grid points per axis
 CoordBase::dx                           = 0.05
 CoordBase::dy                           = 0.05
 CoordBase::dz                           = 0.05
@@ -74,32 +100,44 @@ CoordBase::boundary_shiftout_y_upper    = 0
 CoordBase::boundary_shiftout_z_upper    = 0
 
 Periodic::periodic                      = "yes"
+# -----------------------------------------------------------
+
+
+#############################################################
+# Initial condition
+#############################################################
+
+ADMBase::initial_data                   = "Cartesian Minkowski"
+ADMBase::initial_lapse                  = "one"
+ADMBase::initial_shift                  = "zero"
+# dtlapse and dtshift currently inactive. Default value is "none"
+ADMBase::initial_dtlapse                = "none"
+ADMBase::initial_dtshift                = "none"
+# ------------------------------------------------------------
+
+
+#############################################################
+# Noise
+#############################################################
+Noise::apply_id_noise                   = "yes"
+Noise::id_vars                          = .*
+Noise::amplitude                        = 0.0000000001
+# ------------------------------------------------------------
+
 
 #############################################################
 # Time integration
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 100.0
+Cactus::cctk_final_time                 = 1.0
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
 MoL::MoL_Num_Scratch_Levels             = 1
 
-Time::dtfac                             = 0.25
+Time::dtfac                             = 0.005
 
-#############################################################
-# Initial condition
-#############################################################
-
-ADMBase::initial_data                   = "GaugeWave"
-ADMBase::initial_lapse                  = "GaugeWave"
-ADMBase::initial_shift                  = "GaugeWave"
-ADMBase::initial_dtlapse                = "GaugeWave"
-ADMBase::initial_dtshift                = "GaugeWave"
-
-GaugeWave::amp                          = 0.01
-GaugeWave::period                       = 1.0
 
 #############################################################
 # Time evolution
@@ -111,8 +149,8 @@ ADMBase::shift_evolution_method         = "ML_BSSN"
 ADMBase::dtlapse_evolution_method       = "ML_BSSN"
 ADMBase::dtshift_evolution_method       = "ML_BSSN"
 
-ML_BSSN::harmonicN           = 0.0    # Harmonic
-ML_BSSN::harmonicF           = 1.0    # Harmonic
+ML_BSSN::harmonicN           = 1      # 1+log
+ML_BSSN::harmonicF           = 2.0    # 1+log
 ML_BSSN::ShiftGammaCoeff     = 0.75
 ML_BSSN::BetaDriver          = 1.0
 ML_BSSN::LapseAdvectionCoeff = 1.0
@@ -120,18 +158,7 @@ ML_BSSN::ShiftAdvectionCoeff = 1.0
 
 ML_BSSN::MinimumLapse        = 1.0e-8
 
-Dissipation::order = 5
-Dissipation::vars  = "
-   ML_BSSN::ML_log_confac
-   ML_BSSN::ML_metric
-   ML_BSSN::ML_trace_curv
-   ML_BSSN::ML_curv
-   ML_BSSN::ML_Gamma
-   ML_BSSN::ML_lapse
-   ML_BSSN::ML_shift
-   ML_BSSN::ML_dtlapse
-   ML_BSSN::ML_dtshift
-"
+# Currently dissipation is off. Not sure if I should turn it on or not.
 
 
 #############################################################
@@ -140,12 +167,7 @@ Dissipation::vars  = "
 
 IO::out_dir                             = $parfile
 
-IOBasic::outInfo_every                  = 1
-IOBasic::outInfo_vars                   = "
-   ADMBase::gxx
-"
-
-IOScalar::outScalar_every               = 10
+IOScalar::outScalar_every               = 1
 IOScalar::one_file_per_group            = yes
 IOScalar::outScalar_vars                = "
    ADMBase::gxx
@@ -186,9 +208,4 @@ IOASCII::out1D_vars                     = "
    ADMBase::shift
    ADMBase::dtshift
 "
-# The timer output
-Cactus::cctk_timer_output = "full"
-TimerReport::out_every = 10
-Carpet::output_timers_every = 10
-CarpetLib::print_timestats_every = 10
 
