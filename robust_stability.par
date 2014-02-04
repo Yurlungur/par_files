@@ -120,8 +120,12 @@ ADMBase::initial_dtshift                = "none"
 # Noise
 #############################################################
 Noise::apply_id_noise                   = "yes"
-Noise::id_vars                          = "admbase::metric"
 Noise::amplitude                        = 0.0000000001
+Noise::id_vars                          = "
+   admbase::metric
+   admbase::lapse
+   admbase::shift
+"
 # ------------------------------------------------------------
 
 
