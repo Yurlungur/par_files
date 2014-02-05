@@ -1,5 +1,22 @@
 Cactus::cctk_run_title = "Robust Stability Test"
 
+# We choose to run the robust stability test for three
+# resolutions. The base resolution has b = 16 grid points per axis, or
+# b^3 grid points total. The higher resolutions have (5/4)^n * b grid
+# points per axis, or (5/4)^(3n) * b^3 grid points total, for some
+# value of n.
+
+# This means that the lattice spacing is dx = (4/5)^(n)(1/b)
+# We set the time step dt to be be dt = dx/10.
+# Tabulated, for the first 3 n values, we have:
+# n     (number of grid points)    dx       dt
+# 0               16             0.0625     0.00625
+# 1               20             0.05       0.005
+# 2               25             0.04       0.004
+
+# This means that at t = m*(0.125), m an integer, we can compare the
+# system.
+
 ############################################################
 # Thorns
 ############################################################
@@ -111,8 +128,8 @@ ADMBase::initial_data                   = "Cartesian Minkowski"
 ADMBase::initial_lapse                  = "one"
 ADMBase::initial_shift                  = "zero"
 # dtlapse and dtshift currently inactive. Default value is "none"
-ADMBase::initial_dtlapse                = "none"
-ADMBase::initial_dtshift                = "none"
+ADMBase::initial_dtlapse                = "zero"
+ADMBase::initial_dtshift                = "zero"
 # ------------------------------------------------------------
 
 
@@ -125,6 +142,8 @@ Noise::id_vars                          = "
    admbase::metric
    admbase::lapse
    admbase::shift
+   admbase::dtlapse
+   admbase::dtshift
 "
 # ------------------------------------------------------------
 
