@@ -153,14 +153,14 @@ Noise::id_vars                          = "
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 1.0
+Cactus::cctk_final_time                 = 100
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
 MoL::MoL_Num_Scratch_Levels             = 1
 
 # dtfac = dx/10
-Time::dtfac                             = 0.005
+Time::dtfac                             = 0.1
 
 
 #############################################################

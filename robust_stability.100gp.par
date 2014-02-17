@@ -1,4 +1,4 @@
-Cactus::cctk_run_title = "16^3 grid poinsts --- Robust Stability Test"
+Cactus::cctk_run_title = "25^3 grid poinsts --- Robust Stability Test"
 
 # We choose to run the robust stability test for three
 # resolutions. The base resolution has b = 16 grid points per axis, or
@@ -16,6 +16,9 @@ Cactus::cctk_run_title = "16^3 grid poinsts --- Robust Stability Test"
 
 # This means that at t = m*(0.125), m an integer, we can compare the
 # system.
+
+# We also test one very high resolution where the number of grid
+# points is 100.
 
 ############################################################
 # Thorns
@@ -97,10 +100,10 @@ CoordBase::xmax                         = 1.0
 CoordBase::ymax                         = 1.0
 CoordBase::zmax                         = 1.0
 
-# 16 grid points per axis
-CoordBase::dx                           = 0.0625
-CoordBase::dy                           = 0.0625
-CoordBase::dz                           = 0.0625
+# 100 grid points per axis
+CoordBase::dx                           = 0.01
+CoordBase::dy                           = 0.01
+CoordBase::dz                           = 0.01
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -137,7 +140,7 @@ ADMBase::initial_dtshift                = "zero"
 # Noise
 #############################################################
 Noise::apply_id_noise                   = "yes"
-Noise::amplitude                        = 0.0000000001
+Noise::amplitude                        = 1E-10
 Noise::id_vars                          = "
    admbase::metric
    admbase::lapse
@@ -153,7 +156,7 @@ Noise::id_vars                          = "
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 100
+Cactus::cctk_final_time                 = 1
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4

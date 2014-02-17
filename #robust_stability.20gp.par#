@@ -1,4 +1,4 @@
-Cactus::cctk_run_title = "16^3 grid poinsts --- Robust Stability Test"
+Cactus::cctk_run_title = "20^3 grid poinsts --- Robust Stability Test"
 
 # We choose to run the robust stability test for three
 # resolutions. The base resolution has b = 16 grid points per axis, or
@@ -97,10 +97,10 @@ CoordBase::xmax                         = 1.0
 CoordBase::ymax                         = 1.0
 CoordBase::zmax                         = 1.0
 
-# 16 grid points per axis
-CoordBase::dx                           = 0.0625
-CoordBase::dy                           = 0.0625
-CoordBase::dz                           = 0.0625
+# 20 grid points per axis
+CoordBase::dx                           = 0.05
+CoordBase::dy                           = 0.05
+CoordBase::dz                           = 0.05
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -153,14 +153,14 @@ Noise::id_vars                          = "
 #############################################################
 
 Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = 100
+Cactus::cctk_final_time                 = 1.0
 
 MoL::ODE_Method                         = "RK4"
 MoL::MoL_Intermediate_Steps             = 4
 MoL::MoL_Num_Scratch_Levels             = 1
 
 # dtfac = dx/10
-Time::dtfac                             = 0.1
+Time::dtfac                             = 0.005
 
 
 #############################################################
