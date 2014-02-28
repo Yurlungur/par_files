@@ -1,0 +1,392 @@
+#!/usr/bin/env python2
+
+# gauge_wave.rpar
+
+# Parameter file for the gaugewave, all formulations
+# Time-stamp: <2014-02-28 11:55:25 (jonah)>
+
+# TODO: Change from gauge wave to shifted gauge wave
+
+# These are generically what you want for a parameter file
+# ----------------------------------------------------------------------
+from math import *
+import sys
+import re
+from string import Template
+# ----------------------------------------------------------------------
+
+######################################################################
+# Space parameters
+######################################################################
+amplitude = 0.5
+period = 1.0
+
+# Number of grid points along the propogation axis. The other two axes
+# have a trivial number. The minimum number should be 20. Propogation
+# is along the x-axis
+rho = 2 # number of propogation grid points = 50*rho+1
+
+# Grid parameters
+xmin = -0.5
+xmax = 0.5
+
+# Whether to evolve the gaugewave on the diagonal or along the x-axis
+diagonal = False
+
+######################################################################
+# Evolution parameters
+######################################################################
+
+# Evolution stops at a multiple of the number of periods
+num_evolution_periods = 5
+# dt <= dx * dt_factor
+dt_factor = 0.25
+# Whether or not we want to checkpoint the simulation.
+checkpointing = False
+# Whether or not to use dissipation
+using_dissipation=False
+
+######################################################################
+# Code Preliminaries
+######################################################################
+
+# Functions
+# ----------------------------------------------------------------------
+def make_active_thorns_line(string_list):
+    "Makes a string list for active thorns"
+    outstring = 'ActiveThorns = "\n'
+    for i in string_list:
+        outstring += "   %s\n" % i
+    outstring+='"\n'
+    return outstring
+# ----------------------------------------------------------------------
+# Simple stuff
+# ----------------------------------------------------------------------
+formulation = "@FORMULATION@"
+filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
+admbase_stuff=Template("""
+ADMBase::evolution_method               = "$name"
+ADMBase::lapse_evolution_method         = "$name"
+ADMBase::shift_evolution_method         = "$name"
+ADMBase::dtlapse_evolution_method       = "$name"
+ADMBase::dtshift_evolution_method       = "$name"
+""")
+# ----------------------------------------------------------------------
+
+
+######################################################################
+# Formulation-specifics
+######################################################################
+BSSN = [make_active_thorns_line(["ML_BSSN","ML_BSSN_Helper"]),
+        """
+ML_BSSN::harmonicN           = 2.0    # Harmonic
+ML_BSSN::harmonicF           = 1.0    # Harmonic
+ML_BSSN::BetaDriver          = 1.0
+ML_BSSN::LapseAdvectionCoeff = 1.0
+ML_BSSN::ShiftAdvectionCoeff = 1.0
+ML_BSSN::MinimumLapse        = 1.0e-8
+ML_BSSN::fdOrder             = 4
+""",
+        """
+Dissipation::order = 5
+Dissipation::vars  = "
+   ML_BSSN::ML_log_confac
+   ML_BSSN::ML_metric
+   ML_BSSN::ML_trace_curv
+   ML_BSSN::ML_curv
+   ML_BSSN::ML_Gamma
+   ML_BSSN::ML_lapse
+   ML_BSSN::ML_shift
+   ML_BSSN::ML_dtlapse
+   ML_BSSN::ML_dtshift
+"
+""",admbase_stuff.substitute(name='ML_BSSN')]
+# ----------------------------------------------------------------------
+FOBSSN = [make_active_thorns_line(["CL_BSSN","CL_BSSN_Helper"]),
+        """
+CL_BSSN::harmonicN           = 2.0    # Harmonic
+CL_BSSN::harmonicF           = 1.0    # Harmonic
+# Set the additional required harmonic gauge conditions here
+# CL_BSSN::BetaDriver          = 1.0    
+# CL_BSSN::LapseAdvectionCoeff = 1.0
+# CL_BSSN::ShiftAdvectionCoeff = 1.0
+CL_BSSN::MinimumLapse        = 1.0e-8
+CL_BSSN::fdOrder             = 4
+""",
+        """
+Dissipation::order = 5
+Dissipation::vars  = "
+   CL_BSSN::CL_log_confac
+   CL_BSSN::CL_metric
+   CL_BSSN::CL_trace_curv
+   CL_BSSN::CL_curv
+   CL_BSSN::CL_Gamma
+   CL_BSSN::CL_lapse
+   CL_BSSN::CL_shift
+   CL_BSSN::CL_dtlapse
+   CL_BSSN::CL_dtshift
+   CL_BSSN::CL_dlog_confac
+   CL_BSSN::CL_dmetric
+   CL_BSSN::CL_dlapse
+   CL_BSSN::CL_dshift
+"
+""",admbase_stuff.substitute(name='CL_BSSN')]
+# ----------------------------------------------------------------------
+FOZ4 = [make_active_thorns_line(["ML_FOZ4","ML_FOZ4"]),
+        """
+ML_FOZ4::harmonicN           = 2.0    # Harmonic
+ML_FOZ4::harmonicF           = 1.0    # Harmonic
+# Set the additional required harmonic gauge conditions here
+# ML_FOZ4::BetaDriver          = 1.0    
+# ML_FOZ4::LapseAdvectionCoeff = 1.0
+# ML_FOZ4::ShiftAdvectionCoeff = 1.0
+ML_FOZ4::MinimumLapse        = 1.0e-8
+# ML_FOZ4::fdOrder             = 4
+""",
+        """
+Dissipation::order = 5
+Dissipation::vars  = "
+   ML_FOZ4::Z4_momentum
+   ML_FOZ4::Z4_energy
+   ML_FOZ4::Z4_curv
+   ML_FOZ4::Z4_metric
+   ML_FOZ4::Z4_dmetric
+   ML_FOZ4::Z4_lapse
+   ML_FOZ4::Z4_dlapse
+   ML_FOZ4::Z4_shift
+   ML_FOZ4::Z4_dshift
+"
+""",
+        admbase_stuff.substitute(name='ML_FOZ4')]
+# ----------------------------------------------------------------------
+formulations = {'FOBSSN':FOBSSN,'FOZ4':FOZ4,'BSSN':BSSN}
+# ----------------------------------------------------------------------
+
+
+
+
+######################################################################
+# Calculations
+######################################################################
+
+domain_width = abs(xmax - xmin)
+# dx = dy = dz
+dx = domain_width/(50.0*rho)
+if diagonal:
+    ymax = xmax
+    # And the period must also change
+    period /= sqrt(3.0)
+else: # non-x directions trivial
+    num_trivial_points = 2
+    ymax = num_trivial_points * dx
+zmax = ymax
+ymin = -ymax
+zmin = -zmax
+# Euler rotation angles for the wave
+if diagonal:
+    # Derived from vectors that rotate [1,0,0] into 1/sqrt(3)*[1,1,1]
+    euler_frac = 1.0/13
+    euler_shift = 5.0 - 2.0*sqrt(3.0)
+    euler_psi = -acos(-sqrt(euler_frac*euler_shift))
+    euler_phi = acos(sqrt(euler_frac*euler_shift))
+    euler_theta = acos((1.0/6.0)*(3.0 + sqrt(3.0)))
+else:
+    euler_psi = 0
+    euler_phi = 0
+    euler_theta = 0
+
+# Time evolution
+final_time = num_evolution_periods * period
+dissipation_epsilon = 0.1 if using_dissipation else 0
+
+######################################################################
+# Code
+######################################################################
+
+boiler_plate_thorns = """
+ActiveThorns = "
+   ADMBase
+   ADMCoupling
+   ADMMacros
+   Boundary
+   Carpet
+   CarpetIOBasic
+   CarpetIOASCII
+   CarpetIOScalar
+   CarpetLib
+   CarpetReduce
+   CartGrid3D
+   CoordBase
+   CoordGauge
+   Dissipation
+   GaugeWave
+   GenericFD
+   IOUtil
+   LoopControl
+   MoL
+   SpaceMask
+   SphericalSurface
+   SymBase
+   Periodic
+   Slab
+   StaticConformal
+   Time
+   TmunuBase
+   TimerReport
+   TerminationTrigger
+   CarpetIOHDF5
+   SystemStatistics
+   hwloc
+"
+"""
+
+boiler_plate_main_block = Template("""
+#############################################################
+# Grid
+#############################################################
+
+Carpet::ghost_size                      = 3
+Carpet::domain_from_coordbase           = "yes"
+Carpet::init_each_timelevel             = "yes"
+Carpet::poison_new_timelevels           = yes
+
+CoordBase::domainsize                   = minmax
+
+CartGrid3D::type                        = "coordbase"
+CartGrid3D::domain                      = "full"
+CartGrid3D::avoid_origin                = "no"
+
+CoordBase::xmin                         = $xmin
+CoordBase::ymin                         = $ymin
+CoordBase::zmin                         = $zmin
+
+CoordBase::xmax                         = $xmax
+CoordBase::ymax                         = $ymax
+CoordBase::zmax                         = $zmax
+
+CoordBase::dx                           = $dx
+CoordBase::dy                           = $dx
+CoordBase::dz                           = $dx
+
+CoordBase::boundary_size_x_lower        = 3
+CoordBase::boundary_size_y_lower        = 3
+CoordBase::boundary_size_z_lower        = 3
+CoordBase::boundary_size_x_upper        = 3
+CoordBase::boundary_size_y_upper        = 3
+CoordBase::boundary_size_z_upper        = 3
+
+CoordBase::boundary_shiftout_x_lower    = 1
+CoordBase::boundary_shiftout_y_lower    = 1
+CoordBase::boundary_shiftout_z_lower    = 1
+CoordBase::boundary_shiftout_x_upper    = 0
+CoordBase::boundary_shiftout_y_upper    = 0
+CoordBase::boundary_shiftout_z_upper    = 0
+
+Periodic::periodic                      = "yes"
+
+#############################################################
+# Time integration
+#############################################################
+
+TerminationTrigger::max_walltime = @WALLTIME_HOURS@ # hours
+TerminationTrigger::on_remaining_walltime = 10 # minutes
+TerminationTrigger::output_remtime_every_minutes = 5 
+
+Cactus::terminate                       = "time"
+Cactus::cctk_final_time                 = $final
+
+MoL::ODE_Method                         = "RK4"
+MoL::MoL_Intermediate_Steps             = 4
+MoL::MoL_Num_Scratch_Levels             = 1
+
+Time::dtfac                             = $dt_factor
+
+Dissipation::epsdis = $epsdis
+
+#############################################################
+# Initial condition
+#############################################################
+
+
+ADMBase::initial_data                   = "GaugeWave"
+ADMBase::initial_lapse                  = "GaugeWave"
+ADMBase::initial_shift                  = "GaugeWave"
+ADMBase::initial_dtlapse                = "GaugeWave"
+ADMBase::initial_dtshift                = "GaugeWave"
+
+GaugeWave::amp                          = $amplitude
+GaugeWave::period                       = $period
+
+GaugeWave::psi = $psi
+GaugeWave::theta = $theta
+GaugeWave::phi = $phi
+""")
+
+boilerplate_output="""
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir                             = $parfile
+
+IOBasic::outInfo_every                  = 1
+IOBasic::outInfo_reductions             = "minimum maximum"
+IOBasic::outInfo_vars                   = "
+   Carpet::physical_time_per_hour
+   SystemStatistics::maxrss_mb
+   SystemStatistics::swap_used_mb
+"
+
+IOScalar::outScalar_every               = 10
+IOScalar::one_file_per_group            = yes
+IOScalar::outScalar_reductions = "minimum maximum norm2 norm_inf"
+Ioscalar::outScalar_vars                = "
+   ADMBase::gxx
+   ADMBase::kxx
+   ADMBase::lapse
+   ADMBase::shift
+"
+
+IOASCII::out1D_every                    = 10
+IOASCII::one_file_per_group             = yes
+IOASCII::out1D_vars                     = "
+   ADMBase::gxx
+   ADMBase::kxx
+   ADMBase::lapse
+   ADMBase::shift
+"
+"""
+
+checkpoint_lines="""
+################################################################################
+# Checkpointing and recovery
+################################################################################
+
+CarpetIOHDF5::checkpoint                    = %s
+IO::checkpoint_ID                           = no
+IO::recover                                 = "autoprobe"
+IO::checkpoint_every_walltime_hours         = 3
+IO::out_proc_every                          = 2
+IO::checkpoint_keep                         = 1
+IO::checkpoint_on_terminate                 = yes
+IO::checkpoint_dir                          = "../checkpoints"
+IO::recover_dir                             = "../checkpoints"
+IO::abort_on_io_errors                      = yes
+CarpetIOHDF5::open_one_input_file_at_a_time = yes
+""" % ("yes" if checkpointing else "no")
+
+
+outstring = boiler_plate_thorns + '\n' \
+    + reduce(lambda x,y: "%s %s" % (x,y),formulations[formulation]) \
+    + boiler_plate_main_block.substitute(xmin=xmin,xmax=xmax,ymax=ymax,zmax=zmax,
+                                         dx=dx,dt_factor=dt_factor,
+                                         amplitude=amplitude,period=period,
+                                         final=final_time,ymin=ymin,zmin=zmin,
+                                         epsdis=dissipation_epsilon,
+                                         psi=euler_psi,phi=euler_phi,
+                                         theta=euler_theta)\
+                                     + checkpoint_lines\
+                                     + boilerplate_output
+
+with open(filename,'w') as f:
+    f.write(outstring)
