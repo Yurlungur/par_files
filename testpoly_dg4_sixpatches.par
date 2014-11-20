@@ -1,0 +1,177 @@
+ActiveThorns = "
+   Boundary
+   Carpet
+   CarpetIOASCII
+   CarpetIOBasic
+   CarpetIOScalar
+   CarpetInterp2
+   CarpetLib
+   CarpetReduce
+   CartGrid3D
+   CoordBase
+   Coordinates
+   Formaline
+   GenericFD
+   IOUtil
+   Interpolate2
+   ML_Test_DG4
+   NaNChecker
+   SymBase
+"
+
+#############################################################
+# Grid
+#############################################################
+
+CartGrid3D::type               = "multipatch"
+Coordinates::coordinate_system = "Thornburg04nc"
+
+Coordinates::h_radial            =  5.0/(5*2*@RHO@)   # (order+1)*n cells
+Coordinates::sphere_inner_radius =  1.0
+Coordinates::sphere_outer_radius =  6.0
+Coordinates::n_angular           =  5*@RHO@-1   # (order+1)*n-1
+
+Coordinates::stagger_patch_boundaries = yes
+Coordinates::stagger_outer_boundaries = yes
+
+Interpolate2::interpolator_order = 0   # copy from nearest point
+Interpolate2::shift_edges        = yes
+
+Coordinates::store_jacobian            = yes
+Coordinates::store_inverse_jacobian    = no
+Coordinates::store_jacobian_derivative = no
+Coordinates::store_volume_form         = no
+
+GenericFD::jacobian_group            = "Coordinates::jacobian"
+GenericFD::jacobian_derivative_group = "Coordinates::jacobian2"
+
+#############################################################
+# Carpet
+#############################################################
+
+Carpet::domain_from_multipatch = yes
+Carpet::ghost_size             = 1
+Carpet::granularity            = 5   # (order+1)*m
+Carpet::granularity_boundary   = 1
+
+#############################################################
+# Time integration
+#############################################################
+
+Cactus::cctk_itlast = 0
+
+#############################################################
+# ML_Test
+#############################################################
+
+ML_Test_DG4::tile_size = 5   # order+1
+
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir = "."
+
+IOBasic::outInfo_every      = 1*@RHO@
+IOBasic::outInfo_reductions = "sum norm2"
+IOBasic::outInfo_vars       = "
+   ML_Test_DG4::weightgf1
+   ML_Test_DG4::p1
+"
+
+IOScalar::one_file_per_group = yes
+IOScalar::out_precision       = 17
+
+IOScalar::outScalar_every = 1*@RHO@
+IOScalar::outScalar_vars  = "
+   ML_Test_DG4::WT_weightgf
+   ML_Test_DG4::WT_p0
+   ML_Test_DG4::WT_p1
+   ML_Test_DG4::WT_p2
+   ML_Test_DG4::WT_p3
+   ML_Test_DG4::WT_p4
+   ML_Test_DG4::WT_p5
+   ML_Test_DG4::WT_p6
+   ML_Test_DG4::WT_dp0
+   ML_Test_DG4::WT_dp1
+   ML_Test_DG4::WT_dp2
+   ML_Test_DG4::WT_dp3
+   ML_Test_DG4::WT_dp4
+   ML_Test_DG4::WT_dp5
+   ML_Test_DG4::WT_dp6
+"
+
+IOASCII::one_file_per_group = yes
+IOASCII::out_precision      = 17
+
+IOASCII::out1D_every   = 1*@RHO@
+IOASCII::out1D_xline_z = 3.5
+IOASCII::out1D_yline_z = 3.5
+IOASCII::out1D_vars    = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_Test_DG4::WT_weightgf
+   ML_Test_DG4::WT_p0
+   ML_Test_DG4::WT_p1
+   ML_Test_DG4::WT_p2
+   ML_Test_DG4::WT_p3
+   ML_Test_DG4::WT_p4
+   ML_Test_DG4::WT_p5
+   ML_Test_DG4::WT_p6
+   ML_Test_DG4::WT_dp0
+   ML_Test_DG4::WT_dp1
+   ML_Test_DG4::WT_dp2
+   ML_Test_DG4::WT_dp3
+   ML_Test_DG4::WT_dp4
+   ML_Test_DG4::WT_dp5
+   ML_Test_DG4::WT_dp6
+"
+
+IOASCII::out2D_every     = 1*@RHO@
+IOASCII::out2D_xyplane_z = 3.5
+IOASCII::out2D_vars      = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_Test_DG4::WT_weightgf
+   ML_Test_DG4::WT_p0
+   ML_Test_DG4::WT_p1
+   ML_Test_DG4::WT_p2
+   ML_Test_DG4::WT_p3
+   ML_Test_DG4::WT_p4
+   ML_Test_DG4::WT_p5
+   ML_Test_DG4::WT_p6
+   ML_Test_DG4::WT_dp0
+   ML_Test_DG4::WT_dp1
+   ML_Test_DG4::WT_dp2
+   ML_Test_DG4::WT_dp3
+   ML_Test_DG4::WT_dp4
+   ML_Test_DG4::WT_dp5
+   ML_Test_DG4::WT_dp6
+"
+
+IOASCII::out3D_every = 0 # 1*@RHO@
+IOASCII::out3D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_Test_DG4::WT_weightgf
+   ML_Test_DG4::WT_p0
+   ML_Test_DG4::WT_p1
+   ML_Test_DG4::WT_p2
+   ML_Test_DG4::WT_p3
+   ML_Test_DG4::WT_p4
+   ML_Test_DG4::WT_p5
+   ML_Test_DG4::WT_p6
+   ML_Test_DG4::WT_dp0
+   ML_Test_DG4::WT_dp1
+   ML_Test_DG4::WT_dp2
+   ML_Test_DG4::WT_dp3
+   ML_Test_DG4::WT_dp4
+   ML_Test_DG4::WT_dp5
+   ML_Test_DG4::WT_dp6
+"

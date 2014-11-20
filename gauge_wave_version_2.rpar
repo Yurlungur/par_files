@@ -1,9 +1,9 @@
 #!/usr/bin/env python2
 
-# shifted_gauge_wave.rpar
+# gauge_wave_version_2.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2014-04-30 22:12:18 (jonah)>
+# Time-stamp: <2014-03-06 10:47:00 (jonah)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -16,38 +16,18 @@ from string import Template
 ######################################################################
 # User-defined parameters
 ######################################################################
-# Wave parameters
-amplitude = 0.01
+amplitude = 0.5
 period = 1.0
-
-# Grid parameters
-xmin = -0.5
-xmax = 0.5
-
-# Whether checkpointing is on or off
-checkpointing = False
-# Whether or not to use dissipation
-using_dissipation=False
-
-# Courant number is different
-fd_dt_factor = 0.25
-dgfe_dt_factor = 0.1 # This may need to be set even lower. 
-
-# Set this to run the simulation for only a short time.
-default_debugging=False
-try:
-    debugging = bool(int("@DEBUGGING@"))
-except:
-    debugging = default_debugging
 
 # Number of grid points along the propogation axis. The other two axes
 # have a trivial number. The minimum number should be 20. Propogation
 # is along the x-axis
-default_rho = 2
-try:
-    rho = int(eval("@RHO@")) # number of propogation grid points = 2*(order+1)*rho
-except:
-    rho = default_rho
+rho = int(eval("@RHO@")) # number of propogation grid points = 50*rho+1
+assert rho >= 2 and "Resolution below rho=2 is unstable"
+
+# Grid parameters
+xmin = -0.5
+xmax = 0.5
 
 # Whether to evolve the gaugewave on the diagonal or along the x-axis
 default_diagonal_value = True
@@ -56,56 +36,35 @@ try: # Diagonal accepts either one or zero
 except:
     diagonal = default_diagonal_value
 
-# Number of periods
-default_num_periods = 1
-try:
-    num_periods = int(eval("@PERIODS@"))
-except:
-    num_periods = default_num_periods
+# Whether checkpointing is on or off
+checkpointing = False
+
+dt_factor = 0.25
+num_magic_numbers = 2
+# No idea why this number is special. Courant limit?
+magic_number = 0.5773502691896258
+# Timesteps per magic number
+timesteps_per_magic_number = 50*rho
 # --------------------------------------------------------------------
 
 ######################################################################
 # Calculations
 ######################################################################
-if debugging:
-    num_periods = 0.1
-    out_info_every = 1
-else:
-    out_info_every = 2*rho
-
 my_formulation = "@FORMULATION@"
 filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
-order = 4
-
-# NAMES
-DG_BSSN_NAME="ML_BSSN_DG%s" % order
-FD_BSSN_NAME="ML_BSSN_FD%s" % order
-
-# Cells
-numcells_x = (order+1)*2*rho
-numcells_y = numcells_x if diagonal else (order+1)
-numcells_z = numcells_y
-dx = abs(xmax-xmin)/numcells_x
-
-# If we are using a finite differences approach, xmin can't actually
-# be xmin. We need to shift it by the lattice spacing.
-if my_formulation not in ['DGFE_FOBSSN','DGFE_BSSN']:
-    xmin += dx/2.0
-    xmax += dx/2.0
-    dt_factor=fd_dt_factor
-else:
-    dt_factor=dgfe_dt_factor
-
-# Dissipation is not enabled for DGFE or FOZ4
-if my_formulation in ['DGFE_FOBSSN','FOZ4']:
-    using_dissipation = False
+order = 5
 
 ymin = xmin if diagonal else xmin/(2*rho)
 ymax = xmax if diagonal else xmax/(2*rho)
-zmin = ymin 
-zmax = ymax 
+zmin = ymin
+zmax = ymax
+numcells_x = (order+1)*2*rho
+numcells_y = numcells_x if diagonal else (order+1)
+numcells_z = numcells_y
     
-my_final_time = num_periods * period
+total_iterations = timesteps_per_magic_number*num_magic_numbers
+timestep = magic_number/float(timesteps_per_magic_number)
+my_final_time = num_magic_numbers*magic_number*period
 
 if diagonal:
     period /= sqrt(3.0)
@@ -122,7 +81,6 @@ else:
     euler_phi = 0
     euler_theta = 0
 
-dissipation_epsilon = 0.1 if using_dissipation else 0
 
 ######################################################################
 # FORMULATIONS
@@ -183,248 +141,153 @@ ADMBase::dtshift_evolution_method       = "$name"
     def __str__(self):
         return self.make_par_string()
 
-
-
-# Some common stuff
 # ----------------------------------------------------------------------
-DEFAULT_OUTPUT_VARIABLES="""
-CarpetIOBasic::outInfo_vars         = "
-   Carpet::physical_time_per_hour
-   SystemStatistics::maxrss_mb
-   SystemStatistics::swap_used_mb
-"
-
-CarpetIOScalar::outScalar_vars      = "
-   ADMBase::metric
-   ADMBase::curv
-   ShiftedGaugeWave::metric_exact
-   ShiftedGaugeWave::curv_exact
-"
-
-IOASCII::out1D_vars           =" 
-   grid::coordinates
-   CarpetReduce::weight
-   ADMBase::metric
-   ADMBase::curv
-   ShiftedGaugeWave::metric_exact
-   ShiftedGaugeWave::curv_exact
-"
-
-IOHDF5::out1D_vars           = "
-   grid::coordinates
-   CarpetReduce::weight
-   ADMBase::metric
-   ADMBase::curv
-   ShiftedGaugeWave::metric_exact
-   ShiftedGaugeWave::curv_exact
-"
-"""
-# ----------------------------------------------------------------------    
-
-
-
+# DGFE
 # ----------------------------------------------------------------------
-# DGFE_BSSN
-# ----------------------------------------------------------------------
-DGFE_BSSN_GAUGE_CONDITIONS=Template("""
-$name::harmonicN           = 2     # harmonic
-$name::harmonicF           = 1.0   # harmonic
-$name::shiftFormulation    = 1     # harmonic
-$name::ShiftGammaCoeff     = 0.75 # = 0 # ?
-$name::BetaDriver          = 1.0
-$name::advectLapse         = 1
-$name::advectShift         = 1
-$name::minimumLapse        = 0.0
-$name::conformalMethod     = 1 # 1 for W, 0 for phi
-$name::epsDiss             = 0.0
-$name::epsJump             = 0.0
-# $name::harmonicShift       = 1 # Not sure about this
-""").substitute(name=DG_BSSN_NAME)
-
-DGFE_BSSN_EXTRA_PARAMS = Template("""
-# Extra grid information
-Carpet::ghost_size                      = 1
-Carpet::granularity                     = $order_plus_one   # order+1
-Carpet::granularity_boundary            = 1
-
-# Extra initial data
-$name::initial_boundary_condition = "Minkowski" # can't extrapolate
-$name::rhs_boundary_condition = "zero"          # newrad doesn't work
-
-# Set the tile size
-$name::tile_size = $order_plus_one
-""").substitute(name=DG_BSSN_NAME,
-                order=order,
-                order_plus_one=order+1)
-
-DGFE_BSSN = Formulation("DGFE_BSSN",
-                        ["ML_BSSN_DG4"],
-                        DG_BSSN_NAME,
-                        DGFE_BSSN_GAUGE_CONDITIONS,
-                        DGFE_BSSN_EXTRA_PARAMS+DEFAULT_OUTPUT_VARIABLES)
-# ----------------------------------------------------------------------
-
-
-# DGFE_FOBSSN
-# ----------------------------------------------------------------------
-DGFE_FOBSSN_GAUGE_CONDITIONS="""
-CL_BSSN_DG_P4::harmonicN           = 2     # good
-CL_BSSN_DG_P4::harmonicF           = 1.0   # good
-CL_BSSN_DG_P4::ShiftGammaCoeff     = 0.0
-CL_BSSN_DG_P4::BetaDriver          = 1.0
-CL_BSSN_DG_P4::harmonicShift       = 1
+DGFE_GAUGE_CONDITIONS="""
+CL_BSSN_DG_P5::harmonicN           = 2     # good
+CL_BSSN_DG_P5::harmonicF           = 1.0   # good
+CL_BSSN_DG_P5::ShiftGammaCoeff     = 0.0
+CL_BSSN_DG_P5::BetaDriver          = 1.0
 """
 
-DGFE_FOBSSN_EXTRA_PARAMS = Template("""
-# Extra grid information
+DGFE_EXTRA_PARAMS = """
 Carpet::ghost_size                      = 1
-Carpet::granularity                     = $order_plus_one   # order+1
-Carpet::granularity_boundary            = 1
 
 # Note that this has to be equal to the hard-coded value
-# in CL_BSSN_DG_P4
-SDGMGrid::sdgm_order                    = $order
-HRSCCore::legendre_order                = $order
+# in CL_BSSN_DG_P5
+SDGMGrid::sdgm_order                    = 5
 
 # NaN Checker
 NaNChecker::check_every     = 1
 NaNChecker::verbose         = "all"
 NaNChecker::action_if_found = "terminate"
 NaNChecker::check_vars      = "
-CL_BSSN_DG_P4::gt11
+CL_BSSN_DG_P5::gt11
 "
-""").substitute(order=order,
-                order_plus_one=order+1)
 
-DGFE_FOBSSN_OUTPUT_PARAMS="""
 CarpetIOBasic::outInfo_vars         = "
    Carpet::physical_time_per_hour
    SystemStatistics::maxrss_mb
    SystemStatistics::swap_used_mb
    ADMBase::alp
    ADMBase::gxx
-   ADMBase::kxx
 "
 
 CarpetIOScalar::outScalar_vars      = "
    ADMBase::alp
    ADMBase::gxx
-   ADMBase::kxx
 "
 
 IOASCII::out1D_vars           =" 
   ADMBase::gxx
-  ADMBase::kxx
-  CL_BSSN_DG_P4::gt11
+  CL_BSSN_DG_P5::gt11
   grid::coordinates
 "
 
 IOHDF5::out1D_vars           = "
   ADMBase::gxx
-  ADMBase::kxx
-  CL_BSSN_DG_P4::gt11
-  CL_BSSN_DG_P4::phi
-  CL_BSSN_DG_P4::phirhs
+  CL_BSSN_DG_P5::gt11
+  CL_BSSN_DG_P5::phi
+  CL_BSSN_DG_P5::phirhs
   grid::coordinates
 "
 """
-
-DGFE_FOBSSN = Formulation("DGFE_FOBSSN",
-                          ["CL_BSSN_DG_P4",
-                           "CL_BSSN_DG_P4_Helper",
-                           "HRSCCore",
-                           "SDGMGrid"],
-                          "CL_BSSN_DG_P4",
-                          DGFE_FOBSSN_GAUGE_CONDITIONS,
-                          DGFE_FOBSSN_EXTRA_PARAMS+DGFE_FOBSSN_OUTPUT_PARAMS)
+DGFE = Formulation("DGFE",
+                   ["CL_BSSN_DG_P5",
+                    "CL_BSSN_DG_P5_Helper",
+                    "HRSCCore",
+                    "SDGMGrid"],
+                   "CL_BSSN_DG_P5",
+                   DGFE_GAUGE_CONDITIONS,
+                   DGFE_EXTRA_PARAMS)
 # ----------------------------------------------------------------------
-
-
-
 # Some params used for all finite differences approaches
+FINITE_DIFFERENCES_EXTRA_PARAMS="""
+Coordinates::outer_boundary_size        = 3 # (order + 1)/2
+Carpet::ghost_size                      = 3 # (order + 1)/2
+
+CarpetIOBasic::outInfo_vars         = "
+   Carpet::physical_time_per_hour
+   SystemStatistics::maxrss_mb
+   SystemStatistics::swap_used_mb
+   ADMBase::gxx
+"
+
+CarpetIOScalar::outScalar_vars      = "
+   ADMBase::gxx
+"
+
+IOASCII::out1D_vars           =" 
+  ADMBase::gxx
+  grid::coordinates
+"
+
+IOHDF5::out1D_vars           = "
+  ADMBase::gxx
+  grid::coordinates
+"
+"""
 # ----------------------------------------------------------------------
-FINITE_DIFFERENCES_EXTRA_PARAMS=Template("""
-Coordinates::outer_boundary_size        = $outer_boundary_size # order/2 + 1
-Carpet::ghost_size                      = $ghost_size # order/2 + 1
-
-""").substitute(outer_boundary_size=order/2 + 1,
-                ghost_size=order/2 + 1)
+# BSSN
 # ----------------------------------------------------------------------
-
-
-
-# FD_BSSN
+BSSN_GAUGE_CONDITIONS="""
+ML_BSSN::harmonicN           = 2.0    # Harmonic
+ML_BSSN::harmonicF           = 1.0    # Harmonic
+ML_BSSN::BetaDriver          = 1.0
+ML_BSSN::LapseAdvectionCoeff = 1.0
+ML_BSSN::ShiftAdvectionCoeff = 1.0
+ML_BSSN::MinimumLapse        = 1.0e-8
+ML_BSSN::fdOrder             = 4
+"""
+BSSN_EXTRA_PARAMS = FINITE_DIFFERENCES_EXTRA_PARAMS
+BSSN = Formulation("BSSN",
+                   ["ML_BSSN","ML_BSSN_Helper"],
+                   "ML_BSSN",
+                   BSSN_GAUGE_CONDITIONS,
+                   BSSN_EXTRA_PARAMS)
 # ----------------------------------------------------------------------
-FD_BSSN_GAUGE_CONDITIONS=Template("""
-$name::harmonicN           = 2     # harmonic
-$name::harmonicF           = 1.0   # harmonic
-$name::shiftFormulation    = 1     # harmonic
-$name::shiftGammaCoeff     = 0.75
-$name::betaDriver          = 1.0
-$name::advectLapse         = 1
-$name::advectShift         = 1
-$name::minimumLapse        = 0.0
-$name::conformalMethod     = 1     # 1 for W, 0 for phi
-$name::epsDiss             = 0.0
-$name::epsJump             = 0.0
-""").substitute(name=FD_BSSN_NAME)
-
-FD_BSSN_EXTRA_PARAMS = FINITE_DIFFERENCES_EXTRA_PARAMS\
-    +DEFAULT_OUTPUT_VARIABLES
-
-
-FD_BSSN = Formulation("FD_BSSN",
-                      ["ML_BSSN_FD4"],
-                      FD_BSSN_NAME,
-                      FD_BSSN_GAUGE_CONDITIONS,
-                      FD_BSSN_EXTRA_PARAMS)
+# FOBSSN
 # ----------------------------------------------------------------------
-
-
-
-# FD_FOBSSN
-# ----------------------------------------------------------------------
-FD_FOBSSN_GAUGE_CONDITIONS="""
+FOBSSN_GAUGE_CONDITIONS="""
 CL_BSSN::harmonicN           = 2.0    # Harmonic
 CL_BSSN::harmonicF           = 1.0    # Harmonic
 # Set the additional required harmonic gauge conditions here
-CL_BSSN::BetaDriver          = 1.0
-CL_BSSN::harmonicShift       = 1
+CL_BSSN::BetaDriver          = 1.0    
 CL_BSSN::MinimumLapse        = 1.0e-8
 CL_BSSN::fdOrder             = 4
 """
-FD_FOBSSN_DISSIPATION_PARAMS=Template("""
-Dissipation::epsdis = $dissipation_epsilon
-Dissipation::order = 5
-Dissipation::vars  = "
-   CL_BSSN::CL_log_confac
-   CL_BSSN::CL_metric
-   CL_BSSN::CL_trace_curv
-   CL_BSSN::CL_curv
-   CL_BSSN::CL_Gamma
-   CL_BSSN::CL_lapse
-   CL_BSSN::CL_shift
-   CL_BSSN::CL_dtshift
-   CL_BSSN::CL_dlog_confac
-   CL_BSSN::CL_dmetric
-   CL_BSSN::CL_dlapse
-   CL_BSSN::CL_dshift
-"
-""").substitute(dissipation_epsilon=dissipation_epsilon)
-
-FD_FOBSSN_EXTRA_PARAMS = FINITE_DIFFERENCES_EXTRA_PARAMS
-
-FD_FOBSSN = Formulation("FD_FOBSSN",
-                        ["CL_BSSN","CL_BSSN_Helper","Dissipation"],
-                        "CL_BSSN",
-                        FD_FOBSSN_GAUGE_CONDITIONS,
-                        FD_FOBSSN_EXTRA_PARAMS+DEFAULT_OUTPUT_VARIABLES)
+FOBSSN_EXTRA_PARAMS = FINITE_DIFFERENCES_EXTRA_PARAMS
+FOBSSN = Formulation("FOBSSN",
+                     ["CL_BSSN","CL_BSSN_Helper"],
+                     "CL_BSSN",
+                     FOBSSN_GAUGE_CONDITIONS,
+                     FOBSSN_EXTRA_PARAMS)
+# ----------------------------------------------------------------------
+# FOZ4
+# ----------------------------------------------------------------------
+FOZ4_GAUGE_CONDITIONS="""
+ML_FOZ4::harmonicN           = 2.0    # Harmonic
+ML_FOZ4::harmonicF           = 1.0    # Harmonic
+# Set the additional required harmonic gauge conditions here
+# ML_FOZ4::BetaDriver          = 1.0    
+# ML_FOZ4::LapseAdvectionCoeff = 1.0
+# ML_FOZ4::ShiftAdvectionCoeff = 1.0
+ML_FOZ4::MinimumLapse        = 1.0e-8
+# ML_FOZ4::fdOrder             = 4
+""",
+FOZ4_EXTRA_PARAMS = FINITE_DIFFERENCES_EXTRA_PARAMS
+FOZ4 = Formulation("FOZ4",
+                   ["ML_FOZ4","ML_FOZ4_Helper"],
+                   "ML_FOZ4",
+                   FOZ4_GAUGE_CONDITIONS,
+                   FOZ4_EXTRA_PARAMS)
 
 # ----------------------------------------------------------------------
-formulations = {'FD_BSSN':FD_BSSN,
-                'FD_FOBSSN':FD_FOBSSN,
-                'DGFE_BSSN':DGFE_BSSN,
-                'DGFE_FOBSSN':DGFE_FOBSSN}
+formulations = {'BSSN':BSSN,
+                'FOBSSN':FOBSSN,
+                'FOZ4':FOZ4,
+                'DGFE':DGFE}
 # ----------------------------------------------------------------------
 
 # Boiler plate code
@@ -446,27 +309,24 @@ ActiveThorns = "
   CarpetLib
   CarpetReduce
   CartGrid3d
-  CoordBase
   CoordGauge
   Coordinates
-  Formaline
+  GaugeWave
   GenericFD
-  hwloc
   IOUtil
   LoopControl
   MoL
   NanChecker
-  NewRad
   Periodic
-  ShiftedGaugeWave
   Slab
-  SpaceMask
-  SphericalSurface
   StaticConformal
   SymBase
-  SystemStatistics
   Time
   TmunuBase
+  SystemStatistics
+  hwloc
+  SpaceMask
+  SphericalSurface
 "
 """
 
@@ -476,12 +336,8 @@ BOILER_PLATE_GRID = Template("""
 #############################################################
 
 Coordinates::coordinate_system          = "Cartesian"
-
 Coordinates::store_jacobian             = no
 Coordinates::store_jacobian_derivative  = no
-Coordinates::store_inverse_Jacobian     = no
-Coordinates::store_volume_form          = no
-
 Coordinates::stagger_patch_boundaries   = yes
 Coordinates::stagger_outer_boundaries   = yes
 
@@ -493,7 +349,7 @@ Coordinates::patch_xmax                 = $xmax
 Coordinates::patch_ymax                 = $ymax
 Coordinates::patch_zmax                 = $zmax
 
-Coordinates::ncells_x                   = $numcells_x   # 2*(order+1)*n
+Coordinates::ncells_x                   = $numcells_x   # (order+1)*n
 Coordinates::ncells_y                   = $numcells_y
 Coordinates::ncells_z                   = $numcells_z
 
@@ -513,13 +369,13 @@ BOILER_PLATE_CARPET = """
 # Carpet
 #############################################################
 
+Carpet::granularity                     = 6   # order+1
+Carpet::granularity_boundary            = 1
 Carpet::domain_from_multipatch          = "yes"
 Carpet::max_refinement_levels           = 1
 Carpet::num_integrator_substeps         = 4
 Carpet::output_timer_tree_every         = 1
 LoopControl::verbose                    = no
-
-Carpet::poison_new_timelevels  = no # Does not work with persistent RHS
 """
 
 BOILER_PLATE_TIME_INTEGRATION = Template("""
@@ -527,39 +383,46 @@ BOILER_PLATE_TIME_INTEGRATION = Template("""
 # Time integration
 #############################################################
 
-Cactus::terminate                       = "time"
-Cactus::cctk_final_time                 = $final
+# Cactus::terminate                       = "time"
+# Cactus::cctk_final_time                 = $final
+# 
+# MoL::ODE_Method                         = "RK4"
+# MoL::MoL_Intermediate_Steps             = 4
+# MoL::MoL_Num_Scratch_Levels             = 1
+# 
+# Time::dtfac                             = $dt_factor
 
-MoL::ODE_Method                         = "RK4"
-MoL::MoL_Intermediate_Steps             = 4
-MoL::MoL_Num_Scratch_Levels             = 1
+Cactus::terminate                     = "iteration"
+Cactus::cctk_itlast = $total_iterations
 
-Time::dtfac                             = $dt_factor
+Time::timestep_method                 = "given"
+Time::timestep                        = $timestep
 
-MethodOfLines::init_RHS_zero          = no
+MethodOfLines::ode_method             = "RK4"
+MethodOfLines::MoL_Intermediate_Steps = 4
+MethodOfLines::MoL_Num_Scratch_Levels = 1
+
 MethodOfLines::MoL_NaN_Check          = "yes"
-""").substitute(dt_factor=dt_factor,final=my_final_time)
+""").substitute(dt_factor=dt_factor,final=my_final_time,
+                timestep=timestep,total_iterations=total_iterations)
 
 BOILER_PLATE_INITIAL_DATA = Template("""
 #############################################################
 # Initial data
 #############################################################
 
-ADMBase::initial_data                = "ShiftedGaugeWave"
-ADMBase::initial_lapse               = "ShiftedGaugeWave"
-ADMBase::initial_shift               = "ShiftedGaugeWave"
-ADMBase::initial_dtlapse             = "ShiftedGaugeWave"
-ADMBase::initial_dtshift             = "ShiftedGaugeWave"
+ADMBase::initial_data                = "GaugeWave"
+ADMBase::initial_lapse               = "GaugeWave"
+ADMBase::initial_shift               = "GaugeWave"
+ADMBase::initial_dtlapse             = "GaugeWave"
+ADMBase::initial_dtshift             = "GaugeWave"
 
-ShiftedGaugeWave::amp                          = $amplitude
-ShiftedGaugeWave::period                       = $period
+GaugeWave::amp                          = $amplitude
+GaugeWave::period                       = $period
 
-ShiftedGaugeWave::psi = $psi
-ShiftedGaugeWave::theta = $theta
-ShiftedGaugeWave::phi = $phi
-
-# Outputs exact data too. Convenient for comparisons.
-ShiftedGaugeWave::exact_method = "ShiftedGaugeWave"
+GaugeWave::psi = $psi
+GaugeWave::theta = $theta
+GaugeWave::phi = $phi
 """).substitute(amplitude=amplitude,period=period,
                 psi=euler_psi,theta=euler_theta,phi=euler_phi)
 
@@ -581,7 +444,7 @@ IO::abort_on_io_errors                      = yes
 CarpetIOHDF5::open_one_input_file_at_a_time = yes
 """ % ("yes" if checkpointing else "no")
 
-BOILER_PLATE_OUTPUT =Template("""
+BOILER_PLATE_OUTPUT = """
 #############################################################
 # Output
 #############################################################
@@ -589,17 +452,18 @@ BOILER_PLATE_OUTPUT =Template("""
 IO::out_dir                   = $parfile
 IO::out_fileinfo              = "all"
 
-CarpetIOBasic::outInfo_every        = $every
+CarpetIOBasic::outInfo_every        = 10 # 15
 CarpetIOBasic::outInfo_reductions   = "norm2 maximum minimum"
-CarpetIOScalar::outScalar_every     = $every
+CarpetIOScalar::outScalar_every     = 10 # 15
 CarpetIOScalar::one_file_per_group  = yes
 CarpetIOScalar::outScalar_reductions = "minimum maximum norm2 norm_inf"
 IOASCII::out_precision = 17
-IOASCII::out1D_every          = $every
+IOASCII::out1D_every          = 10 # 15
 IOASCII::one_file_per_group   = yes
-IOHDF5::out1D_every          = $every
+IOHDF5::out1D_every          = 10 # 15
 IOHDF5::one_file_per_group   = yes
-""").substitute(every=out_info_every,parfile="$parfile")
+
+"""
 
 par_string = BOILER_PLATE_THORNS\
     + BOILER_PLATE_CARPET\

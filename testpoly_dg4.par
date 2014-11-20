@@ -1,0 +1,181 @@
+ActiveThorns = "
+   Boundary
+   Carpet
+   CarpetIOASCII
+   CarpetIOBasic
+   CarpetIOScalar
+   CarpetInterp
+   CarpetLib
+   CarpetReduce
+   CartGrid3D
+   CoordBase
+   Coordinates
+   Formaline
+   GenericFD
+   IOUtil
+   InterpToArray
+   ML_LocalInterp
+   ML_Test_DG4
+   NaNChecker
+   Periodic
+   Slab
+   SymBase
+"
+
+#############################################################
+# Grid
+#############################################################
+
+CartGrid3D::type               = "multipatch"
+Coordinates::coordinate_system = "Cartesian"
+
+Coordinates::patch_xmin = -0.5
+Coordinates::patch_ymin = -0.5
+Coordinates::patch_zmin = -0.5
+Coordinates::patch_xmax = +0.5
+Coordinates::patch_ymax = +0.5
+Coordinates::patch_zmax = +0.5
+
+Coordinates::ncells_x = 5   # (order+1)*n
+Coordinates::ncells_y = 5
+Coordinates::ncells_z = 5
+
+Coordinates::stagger_patch_boundaries = yes
+Coordinates::stagger_outer_boundaries = yes
+
+Coordinates::register_symmetry = no
+Periodic::periodic             = yes
+
+Coordinates::store_jacobian            = no
+Coordinates::store_inverse_jacobian    = no
+Coordinates::store_jacobian_derivative = no
+Coordinates::store_volume_form         = no
+
+#############################################################
+# Carpet
+#############################################################
+
+Carpet::domain_from_multipatch = yes
+Carpet::ghost_size             = 1
+Carpet::granularity            = 5   # (order+1)*m
+Carpet::granularity_boundary   = 1
+
+#############################################################
+# Time integration
+#############################################################
+
+Cactus::cctk_itlast = 0
+
+#############################################################
+# ML_Test
+#############################################################
+
+ML_Test_DG4::tile_size = 5   # order+1
+
+ML_Test_DG4::alphaDeriv = 0.5
+
+#############################################################
+# InterpToArray
+#############################################################
+
+InterpToArray::interpolator_name    = "DGFE"
+InterpToArray::interpolator_options = "operation_codes={1 1 1 1 1 1 1}"
+
+InterpToArray::narrays3d       = 7
+InterpToArray::array3d_vars[0] = "ML_Test_DG4::p0"
+InterpToArray::array3d_vars[1] = "ML_Test_DG4::p1"
+InterpToArray::array3d_vars[2] = "ML_Test_DG4::p2"
+InterpToArray::array3d_vars[3] = "ML_Test_DG4::p3"
+InterpToArray::array3d_vars[4] = "ML_Test_DG4::p4"
+InterpToArray::array3d_vars[5] = "ML_Test_DG4::p5"
+InterpToArray::array3d_vars[6] = "ML_Test_DG4::p6"
+
+InterpToArray::array3d_x0        = -0.5 + 0.5/5
+InterpToArray::array3d_y0        = -0.5 + 0.5/5
+InterpToArray::array3d_z0        = -0.5 + 0.5/5
+InterpToArray::array3d_dx_i      =  0.2
+InterpToArray::array3d_dy_j      =  0.2
+InterpToArray::array3d_dz_k      =  0.2
+InterpToArray::array3d_npoints_i =  5
+InterpToArray::array3d_npoints_j =  5
+InterpToArray::array3d_npoints_k =  5
+
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir = "$parfile"
+
+IOBasic::outInfo_every      = 1
+IOBasic::outInfo_reductions = "sum norm2"
+IOBasic::outInfo_vars       = "
+   ML_Test_DG4::weightgf1
+   ML_Test_DG4::p1
+"
+
+IOScalar::one_file_per_group = yes
+IOScalar::out_precision       = 17
+
+IOScalar::outScalar_every = 1
+IOScalar::outScalar_vars  = "
+   ML_Test_DG4::WT_weightgf
+   ML_Test_DG4::WT_p0
+   ML_Test_DG4::WT_p1
+   ML_Test_DG4::WT_p2
+   ML_Test_DG4::WT_p3
+   ML_Test_DG4::WT_p4
+   ML_Test_DG4::WT_p5
+   ML_Test_DG4::WT_p6
+   ML_Test_DG4::WT_dp0
+   ML_Test_DG4::WT_dp1
+   ML_Test_DG4::WT_dp2
+   ML_Test_DG4::WT_dp3
+   ML_Test_DG4::WT_dp4
+   ML_Test_DG4::WT_dp5
+   ML_Test_DG4::WT_dp6
+   ML_Test_DG4::WT_ddp0
+   ML_Test_DG4::WT_ddp1
+   ML_Test_DG4::WT_ddp2
+   ML_Test_DG4::WT_ddp3
+   ML_Test_DG4::WT_ddp4
+   ML_Test_DG4::WT_ddp5
+   ML_Test_DG4::WT_ddp6
+   InterpToArray::arrays3d
+"
+
+IOASCII::one_file_per_group = yes
+IOASCII::out_precision      = 17
+
+IOASCII::out1D_every = 1
+IOASCII::out1D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   ML_Test_DG4::WT_weightgf
+   ML_Test_DG4::WT_p0
+   ML_Test_DG4::WT_p1
+   ML_Test_DG4::WT_p2
+   ML_Test_DG4::WT_p3
+   ML_Test_DG4::WT_p4
+   ML_Test_DG4::WT_p5
+   ML_Test_DG4::WT_p6
+   ML_Test_DG4::WT_dp0
+   ML_Test_DG4::WT_dp1
+   ML_Test_DG4::WT_dp2
+   ML_Test_DG4::WT_dp3
+   ML_Test_DG4::WT_dp4
+   ML_Test_DG4::WT_dp5
+   ML_Test_DG4::WT_dp6
+   ML_Test_DG4::WT_ddp0
+   ML_Test_DG4::WT_ddp1
+   ML_Test_DG4::WT_ddp2
+   ML_Test_DG4::WT_ddp3
+   ML_Test_DG4::WT_ddp4
+   ML_Test_DG4::WT_ddp5
+   ML_Test_DG4::WT_ddp6
+   InterpToArray::arrays3d
+"
+
+IOASCII::out3D_every = 1
+IOASCII::out3D_vars  = "
+   InterpToArray::arrays3d
+"

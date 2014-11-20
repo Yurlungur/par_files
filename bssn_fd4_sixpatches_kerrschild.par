@@ -1,0 +1,671 @@
+ActiveThorns = "
+   ADMBase
+   ADMCoupling
+   ADMMacros
+   AEILocalInterp
+   AHFinderDirect
+   Boundary
+   Carpet
+   CarpetIOASCII
+   CarpetIOBasic
+   CarpetIOHDF5
+   CarpetIOScalar
+   CarpetInterp
+   CarpetInterp2
+   CarpetLib
+   CarpetReduce
+   CartGrid3D
+   CoordBase
+   CoordGauge
+   Coordinates
+   Formaline
+   GenericFD
+   IOUtil
+   InitBase
+   Interpolate2
+   KerrSchild
+   ML_BSSN
+   ML_BSSN_Helper
+   ML_LocalInterp
+   MoL
+   NaNChecker
+   NewRad
+   QuasiLocalMeasures
+   SpaceMask
+   SphericalSurface
+   StaticConformal
+   SymBase
+   SystemStatistics
+   Time
+   TimerReport
+   TmunuBase
+"
+
+#############################################################
+# Grid
+#############################################################
+
+CartGrid3D::type               = "multipatch"
+Coordinates::coordinate_system = "Thornburg04nc"
+
+Coordinates::h_radial            =   1.0/(5*@RHO@)   # (order+1)*n cells
+Coordinates::sphere_inner_radius =   1.0
+Coordinates::sphere_outer_radius = 10.0 # 100
+Coordinates::n_angular           =  5*@RHO@-1   # (order+1)*n-1
+
+Coordinates::stagger_patch_boundaries = yes
+Coordinates::stagger_outer_boundaries = yes
+
+Interpolate2::interpolator_order = 4
+Interpolate2::shift_edges        = no
+
+Coordinates::store_jacobian            = yes # I need to
+Coordinates::store_inverse_jacobian    = no # Check for runtime errors
+Coordinates::store_jacobian_derivative = no
+Coordinates::store_volume_form         = no
+
+GenericFD::jacobian_group            = "Coordinates::jacobian"
+GenericFD::jacobian_derivative_group = "Coordinates::jacobian2"
+
+# OVERLAP
+Coordinates::additional_overlap_size = 3
+
+# BOUNDARY ZONES (needs to be set to three) (also in coordinates thorne)
+Coordinates::patch_boundary_size = 3
+Coordinates::outer_boundary_size = 3
+
+
+#############################################################
+# Carpet
+#############################################################
+
+Carpet::domain_from_multipatch = yes
+Carpet::ghost_size             = 3
+# not for FD
+#Carpet::granularity            = 5   # (order+1)*m
+#Carpet::granularity_boundary   = 1
+
+Carpet::poison_new_timelevels = no   # does not work with persistent RHS
+
+#############################################################
+# Time integration
+#############################################################
+
+#Cactus::terminate       = "time"
+#Cactus::cctk_final_time = @FINAL@
+
+Cactus::cctk_itlast = 1
+
+Time::timestep_method = "given"
+#Time::timestep        = 1E-3
+Time::timestep        = 0.05/@RHO@
+
+#MethodOfLines::ODE_method             = "Euler"
+MethodOfLines::ODE_method             = "RK4"
+#MethodOfLines::MoL_Intermediate_Steps = 1
+MethodOfLines::MoL_Intermediate_Steps = 4
+MethodOfLines::MoL_Num_Scratch_Levels = 1
+
+MethodOfLines::init_RHS_zero = yes
+
+MethodOfLines::MoL_NaN_Check = no
+#MethodOfLines::MoL_NaN_Check = yes
+
+#############################################################
+# ML_BSSN
+#############################################################
+
+ADMBase::initial_data    = "KerrSchild"
+ADMBase::initial_lapse   = "KerrSchild"
+ADMBase::initial_shift   = "KerrSchild"
+ADMBase::initial_dtlapse = "KerrSchild"
+ADMBase::initial_dtshift = "KerrSchild"
+
+KerrSchild::M = 1.0
+KerrSchild::a = 0.0
+
+KerrSchild::exact_method = "KerrSchild"
+
+ADMBase::evolution_method         = "ML_BSSN"
+ADMBase::lapse_evolution_method   = "ML_BSSN"
+ADMBase::shift_evolution_method   = "ML_BSSN"
+ADMBase::dtlapse_evolution_method = "ML_BSSN"
+ADMBase::dtshift_evolution_method = "ML_BSSN"
+
+ML_BSSN::timelevels       = 3
+ML_BSSN::other_timelevels = 3
+ML_BSSN::rhs_timelevels   = 1
+#ML_BSSN::rhs_scheduling   = "persistent"
+
+ML_BSSN::conformalMethod   = 1      # W
+ML_BSSN::harmonicN         = 1      # 1+log
+ML_BSSN::harmonicF         = 2.0    # 1+log
+ML_BSSN::shiftFormulation  = 0      # Gamma driver
+ML_BSSN::shiftGammaCoeff   = 0.75
+ML_BSSN::alphaDriver       = 1.0
+ML_BSSN::betaDriver        = 1.0
+ML_BSSN::evolveA           = 1
+ML_BSSN::evolveB           = 1
+ML_BSSN::advectLapse       = 1
+ML_BSSN::advectShift       = 1
+ML_BSSN::fixAdvectionTerms = 1
+ML_BSSN::minimumLapse      = 1.0e-10
+
+ML_BSSN::initial_boundary_condition = "extrapolate-gammas"
+ML_BSSN::rhs_boundary_condition     = "NewRad"
+Boundary::radpower                  = 2
+
+#############################################################
+# Analysis
+#############################################################
+
+AHFinderDirect::find_every = 20*@RHO@
+
+AHFinderDirect::run_at_CCTK_POST_RECOVER_VARIABLES = no
+
+AHFinderDirect::geometry_interpolator_name = "Lagrange polynomial interpolation"
+
+AHFinderDirect::N_horizons = 1
+AHFinderDirect::initial_guess__coord_sphere__radius[1] = 2.0
+AHFinderDirect::reset_horizon_after_not_finding[1]     = no
+
+AHFinderDirect::verbose_level = "physics details"
+#AHFinderDirect::verbose_level = "algorithm highlights"
+
+AHFinderDirect::output_h_every              = 1
+AHFinderDirect::output_OpenDX_control_files = false
+
+
+#############################################################
+# NaNChecker
+#############################################################
+
+# Debugging stuff. Comment out for production runs.
+NaNChecker::check_every = 1
+NaNChecker::check_after = 0
+NaNChecker::check_vars = "
+   ML_BSSN::ML_confac
+   ML_BSSN::ML_metric
+   ML_BSSN::ML_Gamma
+   ML_BSSN::ML_trace_curv
+   ML_BSSN::ML_curv
+   ML_BSSN::ML_lapse
+   ML_BSSN::ML_shift
+   ML_BSSN::ML_dtlapse
+   ML_BSSN::ML_dtshift
+   ML_BSSN::ML_confacrhs
+   ML_BSSN::ML_metricrhs
+   ML_BSSN::ML_Gammarhs
+   ML_BSSN::ML_trace_curvrhs
+   ML_BSSN::ML_curvrhs
+   ML_BSSN::ML_lapserhs
+   ML_BSSN::ML_shiftrhs
+   ML_BSSN::ML_dtlapserhs
+   ML_BSSN::ML_dtshiftrhs
+   ML_BSSN::ML_Ham
+   ML_BSSN::ML_mom
+   ML_BSSN::ML_cons_detg
+   ML_BSSN::ML_cons_Gamma
+   ML_BSSN::ML_cons_traceA
+   ML_BSSN::At11rhs
+   ML_BSSN::At12rhs
+   ML_BSSN::At13rhs
+   ML_BSSN::At22rhs
+   ML_BSSN::At23rhs
+   ML_BSSN::At33rhs
+   ML_BSSN::Arhs
+   ML_BSSN::B1rhs
+   ML_BSSN::B2rhs
+   ML_BSSN::B3rhs
+   ML_BSSN::Xt1rhs
+   ML_BSSN::Xt2rhs
+   ML_BSSN::Xt3rhs
+   ML_BSSN::gt11rhs
+   ML_BSSN::gt12rhs
+   ML_BSSN::gt13rhs
+   ML_BSSN::gt22rhs
+   ML_BSSN::gt23rhs
+   ML_BSSN::gt33rhs
+   ML_BSSN::trKrhs
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+"
+NaNChecker::action_if_found = "just warn"
+NaNChecker::verbose = "all"
+
+
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir = "$parfile"
+
+CarpetIOBasic::outInfo_every      = 1 # 20*@RHO@
+CarpetIOBasic::outInfo_reductions = "sum norm2"
+CarpetIOBasic::outInfo_vars       = "
+   Carpet::physical_time_per_hour
+   SystemStatistics::maxrss_mb
+   SystemStatistics::swap_used_mb
+   ML_BSSN::alpha
+   ML_BSSN::H
+"
+
+IOScalar::one_file_per_group = yes
+IOScalar::out_precision       = 17
+
+IOScalar::outScalar_every = 1 #1*20*@RHO@
+IOScalar::outScalar_vars  = "
+   ML_BSSN::ML_confac
+   ML_BSSN::ML_metric
+   ML_BSSN::ML_Gamma
+   ML_BSSN::ML_trace_curv
+   ML_BSSN::ML_curv
+   ML_BSSN::ML_lapse
+   ML_BSSN::ML_shift
+   ML_BSSN::ML_dtlapse
+   ML_BSSN::ML_dtshift
+   ML_BSSN::ML_confacrhs
+   ML_BSSN::ML_metricrhs
+   ML_BSSN::ML_Gammarhs
+   ML_BSSN::ML_trace_curvrhs
+   ML_BSSN::ML_curvrhs
+   ML_BSSN::ML_lapserhs
+   ML_BSSN::ML_shiftrhs
+   ML_BSSN::ML_dtlapserhs
+   ML_BSSN::ML_dtshiftrhs
+   ML_BSSN::ML_Ham
+   ML_BSSN::ML_mom
+   ML_BSSN::ML_cons_detg
+   ML_BSSN::ML_cons_Gamma
+   ML_BSSN::ML_cons_traceA
+   ML_BSSN::At11rhs
+   ML_BSSN::At12rhs
+   ML_BSSN::At13rhs
+   ML_BSSN::At22rhs
+   ML_BSSN::At23rhs
+   ML_BSSN::At33rhs
+   ML_BSSN::Arhs
+   ML_BSSN::B1rhs
+   ML_BSSN::B2rhs
+   ML_BSSN::B3rhs
+   ML_BSSN::Xt1rhs
+   ML_BSSN::Xt2rhs
+   ML_BSSN::Xt3rhs
+   ML_BSSN::gt11rhs
+   ML_BSSN::gt12rhs
+   ML_BSSN::gt13rhs
+   ML_BSSN::gt22rhs
+   ML_BSSN::gt23rhs
+   ML_BSSN::gt33rhs
+   ML_BSSN::trKrhs
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+"
+
+IOASCII::one_file_per_group = yes
+IOASCII::out_precision      = 17
+
+IOASCII::out1D_every   = 1 #0*20*@RHO@
+IOASCII::out1D_xline_z = 3.5
+IOASCII::out1D_yline_z = 3.5
+IOASCII::out1D_vars    = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+"
+
+IOHDF5::one_file_per_group = yes
+
+IOHDF5::out1D_every   = 0 #1*20*@RHO@
+IOHDF5::out1D_xline_z = 3.5
+IOHDF5::out1D_yline_z = 3.5
+IOHDF5::out1D_vars    = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_BSSN::ML_confac
+   ML_BSSN::ML_metric
+   ML_BSSN::ML_Gamma
+   ML_BSSN::ML_trace_curv
+   ML_BSSN::ML_curv
+   ML_BSSN::ML_lapse
+   ML_BSSN::ML_shift
+   ML_BSSN::ML_dtlapse
+   ML_BSSN::ML_dtshift
+   ML_BSSN::ML_confacrhs
+   ML_BSSN::ML_metricrhs
+   ML_BSSN::ML_Gammarhs
+   ML_BSSN::ML_trace_curvrhs
+   ML_BSSN::ML_curvrhs
+   ML_BSSN::ML_lapserhs
+   ML_BSSN::ML_shiftrhs
+   ML_BSSN::ML_dtlapserhs
+   ML_BSSN::ML_dtshiftrhs
+   ML_BSSN::ML_Ham
+   ML_BSSN::ML_mom
+   ML_BSSN::ML_cons_detg
+   ML_BSSN::ML_cons_Gamma
+   ML_BSSN::ML_cons_traceA
+   ML_BSSN::At11rhs
+   ML_BSSN::At12rhs
+   ML_BSSN::At13rhs
+   ML_BSSN::At22rhs
+   ML_BSSN::At23rhs
+   ML_BSSN::At33rhs
+   ML_BSSN::Arhs
+   ML_BSSN::B1rhs
+   ML_BSSN::B2rhs
+   ML_BSSN::B3rhs
+   ML_BSSN::Xt1rhs
+   ML_BSSN::Xt2rhs
+   ML_BSSN::Xt3rhs
+   ML_BSSN::gt11rhs
+   ML_BSSN::gt12rhs
+   ML_BSSN::gt13rhs
+   ML_BSSN::gt22rhs
+   ML_BSSN::gt23rhs
+   ML_BSSN::gt33rhs
+   ML_BSSN::trKrhs
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+"
+
+IOHDF5::out2D_every = 0*20*@RHO@
+IOHDF5::out2D_xyplane_z = 3.5
+IOHDF5::out2D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_BSSN::ML_confac
+   ML_BSSN::ML_metric
+   ML_BSSN::ML_Gamma
+   ML_BSSN::ML_trace_curv
+   ML_BSSN::ML_curv
+   ML_BSSN::ML_lapse
+   ML_BSSN::ML_shift
+   ML_BSSN::ML_dtlapse
+   ML_BSSN::ML_dtshift
+   ML_BSSN::ML_confacrhs
+   ML_BSSN::ML_metricrhs
+   ML_BSSN::ML_Gammarhs
+   ML_BSSN::ML_trace_curvrhs
+   ML_BSSN::ML_curvrhs
+   ML_BSSN::ML_lapserhs
+   ML_BSSN::ML_shiftrhs
+   ML_BSSN::ML_dtlapserhs
+   ML_BSSN::ML_dtshiftrhs
+   ML_BSSN::ML_Ham
+   ML_BSSN::ML_mom
+   ML_BSSN::ML_cons_detg
+   ML_BSSN::ML_cons_Gamma
+   ML_BSSN::ML_cons_traceA
+   ML_BSSN::At11rhs
+   ML_BSSN::At12rhs
+   ML_BSSN::At13rhs
+   ML_BSSN::At22rhs
+   ML_BSSN::At23rhs
+   ML_BSSN::At33rhs
+   ML_BSSN::Arhs
+   ML_BSSN::B1rhs
+   ML_BSSN::B2rhs
+   ML_BSSN::B3rhs
+   ML_BSSN::Xt1rhs
+   ML_BSSN::Xt2rhs
+   ML_BSSN::Xt3rhs
+   ML_BSSN::gt11rhs
+   ML_BSSN::gt12rhs
+   ML_BSSN::gt13rhs
+   ML_BSSN::gt22rhs
+   ML_BSSN::gt23rhs
+   ML_BSSN::gt33rhs
+   ML_BSSN::trKrhs
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+"
+
+IOASCII::out2D_every = 1 # 0*20*@RHO@
+IOASCII::out2D_xyplane_z = 3.5
+IOASCII::out2D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_BSSN::ML_confac
+   ML_BSSN::ML_metric
+   ML_BSSN::ML_Gamma
+   ML_BSSN::ML_trace_curv
+   ML_BSSN::ML_curv
+   ML_BSSN::ML_lapse
+   ML_BSSN::ML_shift
+   ML_BSSN::ML_dtlapse
+   ML_BSSN::ML_dtshift
+   ML_BSSN::ML_confacrhs
+   ML_BSSN::ML_metricrhs
+   ML_BSSN::ML_Gammarhs
+   ML_BSSN::ML_trace_curvrhs
+   ML_BSSN::ML_curvrhs
+   ML_BSSN::ML_lapserhs
+   ML_BSSN::ML_shiftrhs
+   ML_BSSN::ML_dtlapserhs
+   ML_BSSN::ML_dtshiftrhs
+   ML_BSSN::ML_Ham
+   ML_BSSN::ML_mom
+   ML_BSSN::ML_cons_detg
+   ML_BSSN::ML_cons_Gamma
+   ML_BSSN::ML_cons_traceA
+   ML_BSSN::At11rhs
+   ML_BSSN::At12rhs
+   ML_BSSN::At13rhs
+   ML_BSSN::At22rhs
+   ML_BSSN::At23rhs
+   ML_BSSN::At33rhs
+   ML_BSSN::Arhs
+   ML_BSSN::B1rhs
+   ML_BSSN::B2rhs
+   ML_BSSN::B3rhs
+   ML_BSSN::Xt1rhs
+   ML_BSSN::Xt2rhs
+   ML_BSSN::Xt3rhs
+   ML_BSSN::gt11rhs
+   ML_BSSN::gt12rhs
+   ML_BSSN::gt13rhs
+   ML_BSSN::gt22rhs
+   ML_BSSN::gt23rhs
+   ML_BSSN::gt33rhs
+   ML_BSSN::trKrhs
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+"
+
+IOHDF5::out3D_every = 0*20*@RHO@
+IOHDF5::out3D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_BSSN::ML_confac
+   ML_BSSN::ML_metric
+   ML_BSSN::ML_Gamma
+   ML_BSSN::ML_trace_curv
+   ML_BSSN::ML_curv
+   ML_BSSN::ML_lapse
+   ML_BSSN::ML_shift
+   ML_BSSN::ML_dtlapse
+   ML_BSSN::ML_dtshift
+   ML_BSSN::ML_confacrhs
+   ML_BSSN::ML_metricrhs
+   ML_BSSN::ML_Gammarhs
+   ML_BSSN::ML_trace_curvrhs
+   ML_BSSN::ML_curvrhs
+   ML_BSSN::ML_lapserhs
+   ML_BSSN::ML_shiftrhs
+   ML_BSSN::ML_dtlapserhs
+   ML_BSSN::ML_dtshiftrhs
+   ML_BSSN::ML_Ham
+   ML_BSSN::ML_mom
+   ML_BSSN::ML_cons_detg
+   ML_BSSN::ML_cons_Gamma
+   ML_BSSN::ML_cons_traceA
+   ML_BSSN::At11rhs
+   ML_BSSN::At12rhs
+   ML_BSSN::At13rhs
+   ML_BSSN::At22rhs
+   ML_BSSN::At23rhs
+   ML_BSSN::At33rhs
+   ML_BSSN::Arhs
+   ML_BSSN::B1rhs
+   ML_BSSN::B2rhs
+   ML_BSSN::B3rhs
+   ML_BSSN::Xt1rhs
+   ML_BSSN::Xt2rhs
+   ML_BSSN::Xt3rhs
+   ML_BSSN::gt11rhs
+   ML_BSSN::gt12rhs
+   ML_BSSN::gt13rhs
+   ML_BSSN::gt22rhs
+   ML_BSSN::gt23rhs
+   ML_BSSN::gt33rhs
+   ML_BSSN::trKrhs
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+"
+
+IOASCII::out3D_every = 0 #0*20*@RHO@
+IOASCII::out3D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_BSSN::ML_confac
+   ML_BSSN::ML_metric
+   ML_BSSN::ML_Gamma
+   ML_BSSN::ML_trace_curv
+   ML_BSSN::ML_curv
+   ML_BSSN::ML_lapse
+   ML_BSSN::ML_shift
+   ML_BSSN::ML_dtlapse
+   ML_BSSN::ML_dtshift
+   ML_BSSN::ML_confacrhs
+   ML_BSSN::ML_metricrhs
+   ML_BSSN::ML_Gammarhs
+   ML_BSSN::ML_trace_curvrhs
+   ML_BSSN::ML_curvrhs
+   ML_BSSN::ML_lapserhs
+   ML_BSSN::ML_shiftrhs
+   ML_BSSN::ML_dtlapserhs
+   ML_BSSN::ML_dtshiftrhs
+   ML_BSSN::ML_Ham
+   ML_BSSN::ML_mom
+   ML_BSSN::ML_cons_detg
+   ML_BSSN::ML_cons_Gamma
+   ML_BSSN::ML_cons_traceA
+   ML_BSSN::At11rhs
+   ML_BSSN::At12rhs
+   ML_BSSN::At13rhs
+   ML_BSSN::At22rhs
+   ML_BSSN::At23rhs
+   ML_BSSN::At33rhs
+   ML_BSSN::Arhs
+   ML_BSSN::B1rhs
+   ML_BSSN::B2rhs
+   ML_BSSN::B3rhs
+   ML_BSSN::Xt1rhs
+   ML_BSSN::Xt2rhs
+   ML_BSSN::Xt3rhs
+   ML_BSSN::gt11rhs
+   ML_BSSN::gt12rhs
+   ML_BSSN::gt13rhs
+   ML_BSSN::gt22rhs
+   ML_BSSN::gt23rhs
+   ML_BSSN::gt33rhs
+   ML_BSSN::trKrhs
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+"
+
+# The timer output
+Cactus::cctk_timer_output = "full"
+TimerReport::out_every = 1 # 10
+TimerReport::out_filename = "timer.asc"
+TimerReport::output_all_timers_readable = yes
+Carpet::output_timers_every = 1 # 10
+CarpetLib::print_timestats_every = 1 # 10

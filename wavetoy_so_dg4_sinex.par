@@ -1,0 +1,133 @@
+ActiveThorns = "
+   Boundary
+   Carpet
+   CarpetIOASCII
+   CarpetIOBasic
+   CarpetIOScalar
+   CarpetLib
+   CarpetReduce
+   CartGrid3D
+   CoordBase
+   Coordinates
+   Formaline
+   GenericFD
+   IOUtil
+   ML_Wavetoy_DG4
+   MoL
+   NaNChecker
+   Periodic
+   Slab
+   SymBase
+   Time
+"
+
+#############################################################
+# Grid
+#############################################################
+
+CartGrid3D::type               = "multipatch"
+Coordinates::coordinate_system = "Cartesian"
+
+Coordinates::patch_xmin = -0.5
+Coordinates::patch_ymin = -0.5
+Coordinates::patch_zmin = -0.5
+Coordinates::patch_xmax = 0.5
+Coordinates::patch_ymax = 0.5
+Coordinates::patch_zmax = 0.5
+
+Coordinates::ncells_x = 5*@RHO@   # (order+1)*n
+Coordinates::ncells_y = 5*1 #*@RHO@
+Coordinates::ncells_z = 5*1 #*@RHO@
+
+Coordinates::stagger_patch_boundaries = yes
+Coordinates::stagger_outer_boundaries = yes
+
+Coordinates::register_symmetry = no
+Periodic::periodic             = yes
+
+Coordinates::store_jacobian            = no
+Coordinates::store_inverse_jacobian    = no
+Coordinates::store_jacobian_derivative = no
+Coordinates::store_volume_form         = no
+
+#############################################################
+# Carpet
+#############################################################
+
+Carpet::domain_from_multipatch = yes
+Carpet::ghost_size             = 1
+Carpet::granularity            = 5   # (order+1)*m
+Carpet::granularity_boundary   = 1
+
+#############################################################
+# Time integration
+#############################################################
+
+Cactus::terminate       = "time"
+Cactus::cctk_final_time = .1
+
+Time::timestep_method = "given"
+Time::timestep        = 0.1/@RHO@
+
+MethodOfLines::ODE_method             = "RK4"
+MethodOfLines::MoL_Intermediate_Steps = 4
+MethodOfLines::MoL_Num_Scratch_Levels = 1
+
+MethodOfLines::init_RHS_zero = no
+
+MethodOfLines::MoL_NaN_Check = yes
+
+#############################################################
+# ML_WaveToy
+#############################################################
+
+ML_WaveToy_DG4::tile_size = 5   # order+1
+
+ML_WaveToy_DG4::initial_data = "sinex"
+ML_WaveToy_DG4::formulation  = "second_order"
+ML_WaveToy_DG4::width        = 1.0
+
+ML_WaveToy_DG4::epsDiss = 0.0
+
+ML_WaveToy_DG4::alphaDeriv = 0.5 # usually 0.5
+
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir = "$parfile"
+
+IOBasic::outInfo_every      = 1 # 1*@RHO@
+IOBasic::outInfo_reductions = "sum norm2"
+IOBasic::outInfo_vars       = "
+   ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_energy
+"
+
+IOScalar::one_file_per_group = yes
+IOScalar::out_precision       = 17
+
+IOScalar::outScalar_every = 1 #1*@RHO@
+IOScalar::outScalar_vars  = "
+   ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_rho
+   ML_WaveToy_DG4::WT_du
+   ML_WaveToy_DG4::WT_urhs
+   ML_WaveToy_DG4::WT_rhorhs
+   ML_WaveToy_DG4::WT_energy
+"
+
+IOASCII::one_file_per_group = yes
+IOASCII::out_precision      = 17
+
+IOASCII::out1D_every = 1# 1*@RHO@
+IOASCII::out1D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_rho
+   ML_WaveToy_DG4::WT_du
+   ML_WaveToy_DG4::WT_urhs
+   ML_WaveToy_DG4::WT_rhorhs
+   ML_WaveToy_DG4::WT_energy
+"
