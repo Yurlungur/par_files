@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2014-06-19 18:10:11 (jonah)>
+# Time-stamp: <2015-01-15 21:13:05 (jonah)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -100,7 +100,7 @@ if debugging:
     num_periods = 0
     out_info_every = 1
 else:
-    out_info_every = int(((5.0/4.0)*rho)/dt_factor)
+    out_info_every = int(((5.0/2.0)*rho)/dt_factor)
 
 # Dissipation is not enabled for DGFE or FOZ4
 if my_formulation in ['DGFE_FOBSSN','FOZ4']:
@@ -129,6 +129,7 @@ else:
     euler_theta = 0
 
 dissipation_epsilon = 0.1 if using_dissipation else 0
+jump_epsilon = 0.*dissipation_epsilon
 
 ######################################################################
 # FORMULATIONS
@@ -325,9 +326,11 @@ $name::advectLapse         = 1
 $name::advectShift         = 1
 $name::minimumLapse        = 1e-8
 $name::conformalMethod     = 0     # 1 for W, 0 for phi
-$name::epsDiss             = 0.0
-$name::epsJump             = 0.0
-""").substitute(name=DG_BSSN_NAME)
+$name::epsDiss             = $epsdiss
+$name::epsJump             = $epsjump
+""").substitute(name=DG_BSSN_NAME,
+                epsdiss=dissipation_epsilon,
+                epsjump=jump_epsilon)
 
 DGFE_BSSN_EXTRA_PARAMS = Template("""
 # Extra grid information
@@ -684,10 +687,10 @@ IO::out_dir                   = $parfile
 IO::out_fileinfo              = "all"
 
 CarpetIOBasic::outInfo_every        = $every
-CarpetIOBasic::outInfo_reductions   = "norm2 maximum minimum"
+CarpetIOBasic::outInfo_reductions   = "maximum minimum"
 CarpetIOScalar::outScalar_every     = $every
 CarpetIOScalar::one_file_per_group  = yes
-CarpetIOScalar::outScalar_reductions = "minimum maximum norm2 norm_inf"
+CarpetIOScalar::outScalar_reductions = "minimum maximum"
 IOASCII::out_precision = 17
 IOASCII::out1D_every          = $every
 IOASCII::one_file_per_group   = yes

@@ -244,7 +244,7 @@ NaNChecker::verbose = "all"
 
 IO::out_dir = "$parfile"
 
-CarpetIOBasic::outInfo_every      = 1 # 20*@RHO@
+CarpetIOBasic::outInfo_every      = 20*@RHO@
 CarpetIOBasic::outInfo_reductions = "sum norm2"
 CarpetIOBasic::outInfo_vars       = "
    Carpet::physical_time_per_hour
@@ -257,7 +257,7 @@ CarpetIOBasic::outInfo_vars       = "
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = 1 #1*20*@RHO@
+IOScalar::outScalar_every = 20*@RHO@
 IOScalar::outScalar_vars  = "
    ML_BSSN::ML_confac
    ML_BSSN::ML_metric
@@ -319,7 +319,7 @@ IOScalar::outScalar_vars  = "
 IOASCII::one_file_per_group = yes
 IOASCII::out_precision      = 17
 
-IOASCII::out1D_every   = 1 #0*20*@RHO@
+IOASCII::out1D_every   = 20*@RHO@
 IOASCII::out1D_xline_z = 3.5
 IOASCII::out1D_yline_z = 3.5
 IOASCII::out1D_vars    = "
@@ -472,7 +472,7 @@ IOHDF5::out2D_vars  = "
    KerrSchild::dtshift_exact
 "
 
-IOASCII::out2D_every = 1 # 0*20*@RHO@
+IOASCII::out2D_every = 0*20*@RHO@
 IOASCII::out2D_xyplane_z = 3.5
 IOASCII::out2D_vars  = "
    grid::coordinates
@@ -664,8 +664,8 @@ IOASCII::out3D_vars  = "
 
 # The timer output
 Cactus::cctk_timer_output = "full"
-TimerReport::out_every = 1 # 10
+TimerReport::out_every = 10
 TimerReport::out_filename = "timer.asc"
 TimerReport::output_all_timers_readable = yes
-Carpet::output_timers_every = 1 # 10
-CarpetLib::print_timestats_every = 1 # 10
+Carpet::output_timers_every = 10
+CarpetLib::print_timestats_every = 10
