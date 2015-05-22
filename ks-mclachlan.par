@@ -4,7 +4,7 @@ Cactus::cctk_full_warnings         = yes
 Cactus::highlight_warning_messages = no
 
 Cactus::terminate       = "time"
-Cactus::cctk_final_time = 100.0
+Cactus::cctk_final_time = @TFINAL@
 
 
 

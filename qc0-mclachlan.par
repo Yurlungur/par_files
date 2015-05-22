@@ -16,7 +16,7 @@ IO::out_dir = $parfile
 
 ActiveThorns = "AEILocalInterp"
 
-ActiveThorns = "BLAS LAPACK"
+#ActiveThorns = "BLAS LAPACK"
 
 ActiveThorns = "Fortran"
 

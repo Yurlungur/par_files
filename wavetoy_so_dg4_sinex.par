@@ -56,7 +56,7 @@ Coordinates::store_volume_form         = no
 
 Carpet::domain_from_multipatch = yes
 Carpet::ghost_size             = 1
-Carpet::granularity            = 5   # (order+1)*m
+Carpet::granularity            = 5   # (order+1)
 Carpet::granularity_boundary   = 1
 
 #############################################################
@@ -64,10 +64,10 @@ Carpet::granularity_boundary   = 1
 #############################################################
 
 Cactus::terminate       = "time"
-Cactus::cctk_final_time = 10
+Cactus::cctk_final_time = @TFINAL@
 
 Time::timestep_method = "given"
-Time::timestep        = 0.1/@RHO@
+Time::timestep        = @BASESTEP@/@RHO@
 
 MethodOfLines::ODE_method             = "RK4"
 MethodOfLines::MoL_Intermediate_Steps = 4
@@ -87,7 +87,7 @@ ML_WaveToy_DG4::initial_data = "sinex"
 ML_WaveToy_DG4::formulation  = "second_order"
 ML_WaveToy_DG4::width        = 1.0
 
-ML_WaveToy_DG4::epsDiss = 0.0
+ML_WaveToy_DG4::epsDiss = @EPSDISS@
 
 ML_WaveToy_DG4::alphaDeriv = 0.5 # usually 0.5
 
@@ -97,7 +97,7 @@ ML_WaveToy_DG4::alphaDeriv = 0.5 # usually 0.5
 
 IO::out_dir = "$parfile"
 
-IOBasic::outInfo_every      = 1*@RHO@
+IOBasic::outInfo_every      = 1#*@RHO@
 IOBasic::outInfo_reductions = "sum norm2"
 IOBasic::outInfo_vars       = "
    ML_WaveToy_DG4::WT_u
@@ -107,7 +107,7 @@ IOBasic::outInfo_vars       = "
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = 1*@RHO@
+IOScalar::outScalar_every = 1#*@RHO@
 IOScalar::outScalar_vars  = "
    ML_WaveToy_DG4::WT_u
    ML_WaveToy_DG4::WT_rho
@@ -120,7 +120,7 @@ IOScalar::outScalar_vars  = "
 IOASCII::one_file_per_group = yes
 IOASCII::out_precision      = 17
 
-IOASCII::out1D_every = 1*@RHO@
+IOASCII::out1D_every = 1#*@RHO@
 IOASCII::out1D_vars  = "
    grid::coordinates
    CarpetReduce::weight

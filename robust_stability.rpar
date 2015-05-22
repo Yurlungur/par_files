@@ -3,7 +3,7 @@
 # robust_stability.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2014-03-24 11:20:09 fritz>
+# Time-stamp: <2014-05-23 16:05:27 (jonah)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -434,7 +434,6 @@ formulations = {'FD_FOBSSN':FD_FOBSSN,'FD_BSSN':FD_BSSN,'DGFE_FOBSSN':DGFE_FOBSS
 ######################################################################
 # Code
 ######################################################################
-
 BOILER_PLATE_THORNS= """
 #############################################################
 # Thorns

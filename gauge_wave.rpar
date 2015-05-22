@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-01-15 21:13:05 (jonah)>
+# Time-stamp: <2015-03-30 15:11:33 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -50,14 +50,14 @@ except:
 # Number of grid points along the propogation axis. The other two axes
 # have a trivial number. The minimum number should be 20. Propogation
 # is along the x-axis
-default_rho = 2
+default_rho = 4
 try:
     rho = int(eval("@RHO@")) # number of propogation grid points = 2*(order+1)*rho
 except:
     rho = default_rho
 
 # Whether to evolve the gaugewave on the diagonal or along the x-axis
-default_diagonal_value = True
+default_diagonal_value = False
 try: # Diagonal accepts either one or zero
     diagonal = bool(int("@DIAGONAL@"))
 except:
@@ -128,7 +128,7 @@ else:
     euler_phi = 0
     euler_theta = 0
 
-dissipation_epsilon = 0.1 if using_dissipation else 0
+dissipation_epsilon = 1 if using_dissipation else 0
 jump_epsilon = 0.*dissipation_epsilon
 
 ######################################################################

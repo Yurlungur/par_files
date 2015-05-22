@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2014-04-30 22:12:18 (jonah)>
+# Time-stamp: <2014-06-12 22:14:30 (jonah)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -185,6 +185,7 @@ ADMBase::dtshift_evolution_method       = "$name"
 
 
 
+# ----------------------------------------------------------------------
 # Some common stuff
 # ----------------------------------------------------------------------
 DEFAULT_OUTPUT_VARIABLES="""

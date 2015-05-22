@@ -7,7 +7,7 @@ ActiveThorns = "SpaceMask CoordGauge Constants LocalReduce aeilocalinterp LoopCo
 ActiveThorns = "Carpet CarpetLib CarpetReduce CarpetRegrid2 CarpetInterp"
 ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic"
 
-ActiveThorns = "ADMConstraints NaNChecker"
+ActiveThorns = "ML_ADMConstraints NaNChecker"
 
 # grid parameters
 CartGrid3D::type         = "coordbase"
@@ -19,9 +19,9 @@ CoordBase::zmin =   0.0
 CoordBase::xmax = 240.0
 CoordBase::ymax = 240.0
 CoordBase::zmax = 240.0
-CoordBase::dx   =   8
-CoordBase::dy   =   8
-CoordBase::dz   =   8
+CoordBase::dx   =   16
+CoordBase::dy   =   16
+CoordBase::dz   =   16
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -61,9 +61,7 @@ ADMMacros::spatial_order = 4
 
 ADMBase::metric_type     = "physical"
 
-ADMConstraints::bound            = "static"
-ADMConstraints::constraints_timelevels = 3
-ADMConstraints::constraints_persist    = yes
+ML_ADMConstraints::timelevels = 3
 
 SpaceMask::use_mask      = "yes"
 
@@ -198,8 +196,8 @@ IOScalar::outScalar_vars  = "
  ADMBase::lapse
  ADMBase::metric
  ADMBase::curv
- ADMConstraints::ham
- ADMConstraints::momentum
+ ML_ADMConstraints::ML_Ham
+ ML_ADMConstraints::ML_mom
  
 "
 
@@ -216,7 +214,7 @@ IOASCII::out1D_vars      = "
  ADMBase::lapse
  ADMBase::metric
  ADMBase::curv
- ADMConstraints::ham
- ADMConstraints::momentum
+ ML_ADMConstraints::ML_Ham
+ ML_ADMConstraints::ML_mom
  
 "
