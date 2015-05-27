@@ -1,0 +1,150 @@
+ActiveThorns = "
+   Boundary
+   Carpet
+   CarpetIOASCII
+   CarpetIOBasic
+   CarpetIOScalar
+   CarpetIOHDF5
+   CarpetLib
+   CarpetReduce
+   CarpetRegrid2
+   CarpetInterp
+   CartGrid3D
+   CoordBase
+   Coordinates
+   Formaline
+   GenericFD
+   IOUtil
+   ML_Wavetoy
+   MoL
+   NaNChecker
+   Periodic
+   Slab
+   SymBase
+   Time
+"
+
+#############################################################
+# Grid
+#############################################################
+
+CartGrid3D::type               = "coordbase"
+CartGrid3D::domain             = "full"
+CartGrid3D::avoid_origin       =  "no"
+
+CoordBase::xmin = -0.5
+CoordBase::ymin = -0.5
+CoordBase::zmin = -0.5
+CoordBase::xmax = 0.5
+CoordBase::ymax = 0.5
+CoordBase::zmax = 0.5
+
+CoordBase::dx = 0.1
+CoordBase::dy = 0.1
+CoordBase::dz = 0.1
+
+CoordBase::bundary_size_x_lower = 3
+CoordBase::bundary_size_y_lower = 3
+CoordBase::bundary_size_z_lower = 3
+
+CoordBase::bundary_size_x_upper = 3
+CoordBase::bundary_size_y_upper = 3
+CoordBase::bundary_size_z_upper = 3
+
+CoordBase::boundary_shiftout_x_lower = 0
+CoordBase::boundary_shiftout_y_lower = 0
+CoordBase::boundary_shiftout_z_lower = 0
+CoordBase::boundary_shiftout_x_upper = 0
+CoordBase::boundary_shiftout_y_upper = 0
+CoordBase::boundary_shiftout_z_upper = 0
+
+Periodic::periodic             = yes
+
+#############################################################
+# Carpet
+#############################################################
+
+Carpet::domain_from_coordbase = "yes"
+Carpet::enable_all_storage       = no
+Carpet::use_buffer_zones         = "yes"
+
+Carpet::poison_new_timelevels    = "yes"
+Carpet::check_for_poison         = "no"
+Carpet::poison_value             = 113
+
+Carpet::init_3_timelevels        = no
+Carpet::init_fill_timelevels     = "yes"
+
+CarpetLib::poison_new_memory = "yes"
+CarpetLib::poison_value      = 114
+
+# system specific Carpet paramters
+Carpet::max_refinement_levels    = 10
+driver::ghost_size               = 3
+Carpet::prolongation_order_space = 3
+Carpet::prolongation_order_time  = 2
+
+CarpetRegrid2::regrid_every = 0
+CarpetRegrid2::num_centres  = 1
+
+CarpetRegrid2::num_levels_1 = 4
+CarpetRegrid2::radius_1[1]   = 0.5
+CarpetRegrid2::radius_1[2]   = 0.25
+CarpetRegrid2::radius_1[3]   = 0.125
+
+#############################################################
+# Time integration
+#############################################################
+
+Cactus::terminate       = "time"
+Cactus::cctk_final_time = 2.0
+
+Time::timestep_method = "given"
+Time::dtfac           = 0.25
+
+MethodOfLines::ODE_method             = "RK4"
+MethodOfLines::MoL_Intermediate_Steps = 4
+MethodOfLines::MoL_Num_Scratch_Levels = 1
+
+MethodOfLines::init_RHS_zero = no
+
+MethodOfLines::MoL_NaN_Check = yes
+
+#############################################################
+# ML_WaveToy
+#############################################################
+
+ML_WaveToy::initial_data = "Gaussian"
+ML_WaveToy::width        = 0.5
+
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir = "$parfile"
+
+IOBasic::outInfo_every      = 1
+IOBasic::outInfo_reductions = "sum norm2"
+IOBasic::outInfo_vars       = "
+   ML_WaveToy::WT_u
+   ML_WaveToy::WT_rho
+"
+
+IOScalar::one_file_per_group = yes
+IOScalar::out_precision       = 17
+
+IOScalar::outScalar_every = 10
+IOScalar::outScalar_vars  = "
+   ML_WaveToy::WT_u
+   ML_WaveToy::WT_rho
+"
+
+IOHFD5::one_file_per_group = yes
+IOHDF5::out_precision      = 17
+
+IOHDF5::out1D_every = 10
+IOHDF5::out1D_vars  = "
+   grid::coordinates
+   ML_WaveToy::WT_u
+   ML_WaveToy::WT_rho
+"
