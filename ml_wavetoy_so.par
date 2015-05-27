@@ -16,10 +16,10 @@ ActiveThorns = "
    ML_Wavetoy
    MoL
    NaNChecker
-   Periodic
-   Slab
    SymBase
    Time
+   Periodic
+   Slab
 "
 
 #############################################################
@@ -37,17 +37,17 @@ CoordBase::xmax = 0.5
 CoordBase::ymax = 0.5
 CoordBase::zmax = 0.5
 
-CoordBase::dx = 0.1
-CoordBase::dy = 0.1
-CoordBase::dz = 0.1
+CoordBase::dx = 0.05
+CoordBase::dy = 0.05
+CoordBase::dz = 0.05
 
-CoordBase::bundary_size_x_lower = 3
-CoordBase::bundary_size_y_lower = 3
-CoordBase::bundary_size_z_lower = 3
+CoordBase::boundary_size_x_lower = 3
+CoordBase::boundary_size_y_lower = 3
+CoordBase::boundary_size_z_lower = 3
 
-CoordBase::bundary_size_x_upper = 3
-CoordBase::bundary_size_y_upper = 3
-CoordBase::bundary_size_z_upper = 3
+CoordBase::boundary_size_x_upper = 3
+CoordBase::boundary_size_y_upper = 3
+CoordBase::boundary_size_z_upper = 3
 
 CoordBase::boundary_shiftout_x_lower = 0
 CoordBase::boundary_shiftout_y_lower = 0
@@ -56,7 +56,7 @@ CoordBase::boundary_shiftout_x_upper = 0
 CoordBase::boundary_shiftout_y_upper = 0
 CoordBase::boundary_shiftout_z_upper = 0
 
-Periodic::periodic             = yes
+Periodic::periodic = "yes"
 
 #############################################################
 # Carpet
@@ -79,16 +79,15 @@ CarpetLib::poison_value      = 114
 # system specific Carpet paramters
 Carpet::max_refinement_levels    = 10
 driver::ghost_size               = 3
-Carpet::prolongation_order_space = 3
-Carpet::prolongation_order_time  = 2
+#Carpet::prolongation_order_space = 3
+Carpet::prolongation_order_time  = 0
 
 CarpetRegrid2::regrid_every = 0
 CarpetRegrid2::num_centres  = 1
 
-CarpetRegrid2::num_levels_1 = 4
-CarpetRegrid2::radius_1[1]   = 0.5
-CarpetRegrid2::radius_1[2]   = 0.25
-CarpetRegrid2::radius_1[3]   = 0.125
+CarpetRegrid2::num_levels_1 = 3
+CarpetRegrid2::radius_1[1]   = 0.25
+CarpetRegrid2::radius_1[2]   = 0.125
 
 #############################################################
 # Time integration
@@ -97,7 +96,7 @@ CarpetRegrid2::radius_1[3]   = 0.125
 Cactus::terminate       = "time"
 Cactus::cctk_final_time = 2.0
 
-Time::timestep_method = "given"
+#Time::timestep_method = "courant_static"
 Time::dtfac           = 0.25
 
 MethodOfLines::ODE_method             = "RK4"
@@ -112,8 +111,13 @@ MethodOfLines::MoL_NaN_Check = yes
 # ML_WaveToy
 #############################################################
 
+ML_WaveToy::timelevels = 2
+ML_WaveToy::rhs_timelevels = 2
+ML_WaveToy::other_timelevels = 2
 ML_WaveToy::initial_data = "Gaussian"
-ML_WaveToy::width        = 0.5
+ML_WaveToy::width        = 0.25
+ML_WaveToy::u_bound      = "skip"
+ML_WaveToy::rho_bound    = "skip"
 
 #############################################################
 # Output
@@ -138,11 +142,17 @@ IOScalar::outScalar_vars  = "
 "
 
 IOHDF5::one_file_per_group = yes
-IOHDF5::out_precision      = 17
 
 IOHDF5::out1D_every = 10
 IOHDF5::out1D_vars  = "
    grid::coordinates
    ML_WaveToy::WT_u
    ML_WaveToy::WT_rho
+"
+
+IOHDF5::out3D_every     = 10
+IOHDF5::out3D_vars      = "
+ grid::coordinates
+ ML_WaveToy::WT_u
+ ML_WaveToy::WT_rho
 "
