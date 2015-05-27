@@ -11,8 +11,6 @@ ActiveThorns = "
    CarpetInterp
    CartGrid3D
    CoordBase
-   Coordinates
-   Formaline
    GenericFD
    IOUtil
    ML_Wavetoy
