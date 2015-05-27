@@ -137,7 +137,7 @@ IOScalar::outScalar_vars  = "
    ML_WaveToy::WT_rho
 "
 
-IOHFD5::one_file_per_group = yes
+IOHDF5::one_file_per_group = yes
 IOHDF5::out_precision      = 17
 
 IOHDF5::out1D_every = 10
