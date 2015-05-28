@@ -79,22 +79,23 @@ CarpetLib::poison_value      = 114
 # system specific Carpet paramters
 Carpet::max_refinement_levels    = 10
 driver::ghost_size               = 3
-#Carpet::prolongation_order_space = 3
-Carpet::prolongation_order_time  = 0
+Carpet::prolongation_order_space = 5
+Carpet::prolongation_order_time  = 1
 
 CarpetRegrid2::regrid_every = 0
 CarpetRegrid2::num_centres  = 1
 
-CarpetRegrid2::num_levels_1 = 3
-CarpetRegrid2::radius_1[1]   = 0.25
-CarpetRegrid2::radius_1[2]   = 0.125
+CarpetRegrid2::num_levels_1 = 4
+CarpetRegrid2::radius_1[1]   = 0.5
+CarpetRegrid2::radius_1[2]   = 0.25
+CarpetRegrid2::radius_1[3]   = 0.125
 
 #############################################################
 # Time integration
 #############################################################
 
 Cactus::terminate       = "time"
-Cactus::cctk_final_time = 2.0
+Cactus::cctk_final_time = 1.0
 
 #Time::timestep_method = "courant_static"
 Time::dtfac           = 0.25
@@ -113,9 +114,10 @@ MethodOfLines::MoL_NaN_Check = yes
 
 ML_WaveToy::timelevels = 2
 ML_WaveToy::rhs_timelevels = 2
-ML_WaveToy::other_timelevels = 2
+ML_WaveToy::other_timelevels = 1
 ML_WaveToy::initial_data = "Gaussian"
-ML_WaveToy::width        = 0.25
+ML_WaveToy::amplitude    = 2
+ML_WaveToy::width        = 0.05
 ML_WaveToy::u_bound      = "skip"
 ML_WaveToy::rho_bound    = "skip"
 
@@ -125,17 +127,18 @@ ML_WaveToy::rho_bound    = "skip"
 
 IO::out_dir = "$parfile"
 
-IOBasic::outInfo_every      = 1
-IOBasic::outInfo_reductions = "sum norm2"
+IOBasic::outInfo_every      = 1024
+IOBasic::outInfo_reductions = "norm2"
 IOBasic::outInfo_vars       = "
    ML_WaveToy::WT_u
    ML_WaveToy::WT_rho
+   ML_WaveToy::WT_eps
 "
 
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = 10
+IOScalar::outScalar_every = 4*1024
 IOScalar::outScalar_vars  = "
    ML_WaveToy::WT_u
    ML_WaveToy::WT_rho
@@ -143,16 +146,17 @@ IOScalar::outScalar_vars  = "
 
 IOHDF5::one_file_per_group = yes
 
-IOHDF5::out1D_every = 10
+IOHDF5::out1D_every = 0
 IOHDF5::out1D_vars  = "
    grid::coordinates
    ML_WaveToy::WT_u
    ML_WaveToy::WT_rho
 "
 
-IOHDF5::out3D_every     = 10
+IOHDF5::out3D_every     = 4*1024
 IOHDF5::out3D_vars      = "
  grid::coordinates
  ML_WaveToy::WT_u
  ML_WaveToy::WT_rho
+ ML_WaveToy::WT_eps
 "
