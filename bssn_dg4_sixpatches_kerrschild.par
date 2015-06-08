@@ -7,6 +7,7 @@ ActiveThorns = "
    Boundary
    Carpet
    CarpetIOASCII
+   CarpetIOHDF5
    CarpetIOBasic
    CarpetIOScalar
    CarpetInterp
@@ -39,13 +40,18 @@ ActiveThorns = "
 # Grid
 #############################################################
 
+# Required for multipatch
 CartGrid3D::type               = "multipatch"
+CartGrid3D::set_coordinate_ranges_on = "all maps"
+
+# The name of the sixpatches system
 Coordinates::coordinate_system = "Thornburg04nc"
 
-Coordinates::h_radial            =   1.0/(5*@RHO@)   # (order+1)*n cells
+
+Coordinates::h_radial            = (@OUTERRADIUS@ - 1.0) / (5*@RHORADIAL@) # (order+1)*n 
 Coordinates::sphere_inner_radius =   1.0
-Coordinates::sphere_outer_radius = 100.0
-Coordinates::n_angular           =  5*@RHO@-1   # (order+1)*n-1
+Coordinates::sphere_outer_radius = @OUTERRADIUS@
+Coordinates::n_angular           =  5*@RHOANGULAR@-1   # (order+1)*n-1
 
 Coordinates::stagger_patch_boundaries = yes
 Coordinates::stagger_outer_boundaries = yes
@@ -80,7 +86,7 @@ Cactus::terminate       = "time"
 Cactus::cctk_final_time = @FINAL@
 
 Time::timestep_method = "given"
-Time::timestep        = 0.05/@RHO@
+Time::timestep        = 0.05/@RHORADIAL@
 
 MethodOfLines::ODE_method             = "RK4"
 MethodOfLines::MoL_Intermediate_Steps = 4
@@ -130,14 +136,14 @@ ML_BSSN_DG4::advectLapse         = 0
 ML_BSSN_DG4::advectShift         = 0
 ML_BSSN_DG4::minimumLapse        = 0.0
 ML_BSSN_DG4::conformalMethod     = 1      # W
-ML_BSSN_DG4::epsDiss             = 1.0
-ML_BSSN_DG4::epsJump             = 1.0
+ML_BSSN_DG4::epsDiss             = 0
+ML_BSSN_DG4::epsJump             = 0
 
 #############################################################
 # Analysis
 #############################################################
 
-AHFinderDirect::find_every = 20*@RHO@
+AHFinderDirect::find_every = 20*@RHORADIAL@
 
 AHFinderDirect::run_at_CCTK_POST_RECOVER_VARIABLES = no
 
@@ -159,7 +165,7 @@ AHFinderDirect::output_OpenDX_control_files = false
 
 IO::out_dir = "$parfile"
 
-IOBasic::outInfo_every      = 20*@RHO@
+IOBasic::outInfo_every      = 1 #20*@RHORADIAL@
 IOBasic::outInfo_reductions = "sum norm2"
 IOBasic::outInfo_vars       = "
    ML_BSSN_DG4::alpha
@@ -169,7 +175,7 @@ IOBasic::outInfo_vars       = "
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = 20*@RHO@
+IOScalar::outScalar_every = 1 # 20*@RHORADIAL@
 IOScalar::outScalar_vars  = "
    ML_BSSN_DG4::ML_confac
    ML_BSSN_DG4::ML_metric
@@ -208,13 +214,12 @@ IOScalar::outScalar_vars  = "
    KerrSchild::dtshift_exact
 "
 
-IOASCII::one_file_per_group = yes
-IOASCII::out_precision      = 17
+IOHDF5::one_file_per_group = yes
 
-IOASCII::out1D_every   = 20*@RHO@
-IOASCII::out1D_xline_z = 3.5
-IOASCII::out1D_yline_z = 3.5
-IOASCII::out1D_vars    = "
+IOHDF5::out1D_every   = 0 # 20*@RHORADIAL@
+IOHDF5::out1D_xline_z = 3.5
+IOHDF5::out1D_yline_z = 3.5
+IOHDF5::out1D_vars    = "
    grid::coordinates
    CarpetReduce::weight
    Coordinates::jacobian
@@ -256,9 +261,9 @@ IOASCII::out1D_vars    = "
    KerrSchild::dtshift_exact
 "
 
-IOASCII::out2D_every = 0*20*@RHO@
-IOASCII::out2D_xyplane_z = 3.5
-IOASCII::out2D_vars  = "
+IOHDF5::out2D_every = 0 # 0*20*@RHORADIAL@
+IOHDF5::out2D_xyplane_z = 3.5
+IOHDF5::out2D_vars  = "
    grid::coordinates
    CarpetReduce::weight
    Coordinates::jacobian
@@ -300,8 +305,8 @@ IOASCII::out2D_vars  = "
    KerrSchild::dtshift_exact
 "
 
-IOASCII::out3D_every = 0*20*@RHO@
-IOASCII::out3D_vars  = "
+IOHDF5::out3D_every = 1 #20*@RHORADIAL@
+IOHDF5::out3D_vars  = "
    grid::coordinates
    CarpetReduce::weight
    Coordinates::jacobian
