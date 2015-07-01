@@ -165,7 +165,7 @@ AHFinderDirect::output_OpenDX_control_files = false
 
 IO::out_dir = "$parfile"
 
-IOBasic::outInfo_every      = 1 #20*@RHORADIAL@
+IOBasic::outInfo_every      = 20*@RHORADIAL@
 IOBasic::outInfo_reductions = "sum norm2"
 IOBasic::outInfo_vars       = "
    ML_BSSN_DG4::alpha
@@ -175,7 +175,7 @@ IOBasic::outInfo_vars       = "
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = 1 # 20*@RHORADIAL@
+IOScalar::outScalar_every = 20*@RHORADIAL@
 IOScalar::outScalar_vars  = "
    ML_BSSN_DG4::ML_confac
    ML_BSSN_DG4::ML_metric
@@ -305,7 +305,7 @@ IOHDF5::out2D_vars  = "
    KerrSchild::dtshift_exact
 "
 
-IOHDF5::out3D_every = 1 #20*@RHORADIAL@
+IOHDF5::out3D_every = 20*@RHORADIAL@
 IOHDF5::out3D_vars  = "
    grid::coordinates
    CarpetReduce::weight

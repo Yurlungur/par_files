@@ -198,11 +198,11 @@ IOScalar::outScalar_vars  = "
  grid::coordinates 
 "
 
-IOHDF5::out1D_every     = 256
+IOHDF5::out1D_every     = 0 # 0 means no output
 IOHDF5::one_file_per_group = yes
-IOHDF5::output_symmetry_points = no
-IOHDF5::out3D_ghosts           = no
-IOHDF5::out3D_outer_ghosts     = no
+IOHDF5::output_symmetry_points = yes # default = yes
+IOHDF5::out3D_ghosts           = yes # default = yes
+IOHDF5::out3D_outer_ghosts     = yes # default = yes
 IOHDF5::out1D_vars      = "
  HydroBase::rho
  HydroBase::press

@@ -145,8 +145,8 @@ IOScalar::outScalar_vars  = "
 "
 
 IOHDF5::one_file_per_group = yes
-IOHDF5::out3D_ghosts           = no   # default yes
-IOHDF5::out3D_outer_ghosts     = no   # default yes
+IOHDF5::out3D_ghosts           = yes   # default yes
+IOHDF5::out3D_outer_ghosts     = yes   # default yes
 
 IOHDF5::out1D_every = 0
 IOHDF5::out1D_vars  = "
@@ -161,4 +161,6 @@ IOHDF5::out3D_vars      = "
  ML_WaveToy::WT_u
  ML_WaveToy::WT_rho
  ML_WaveToy::WT_eps
+ CarpetReduce::weight
+ CarpetReduce::iweight
 "

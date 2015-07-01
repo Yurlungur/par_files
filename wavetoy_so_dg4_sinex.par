@@ -2,6 +2,7 @@ ActiveThorns = "
    Boundary
    Carpet
    CarpetIOASCII
+   CarpetIOHDF5
    CarpetIOBasic
    CarpetIOScalar
    CarpetLib
@@ -10,7 +11,7 @@ ActiveThorns = "
    CoordBase
    Coordinates
    Formaline
-n   GenericFD
+   GenericFD
    IOUtil
    ML_Wavetoy_DG4
    MoL
@@ -97,17 +98,18 @@ ML_WaveToy_DG4::alphaDeriv = 0.5 # usually 0.5
 
 IO::out_dir = "$parfile"
 
-IOBasic::outInfo_every      = 1#*@RHO@
+IOBasic::outInfo_every      = 1*@RHO@
 IOBasic::outInfo_reductions = "sum norm2"
 IOBasic::outInfo_vars       = "
    ML_WaveToy_DG4::WT_u
    ML_WaveToy_DG4::WT_energy
+   ML_WaveToy_DG4::WT_errenergy
 "
 
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = 1#*@RHO@
+IOScalar::outScalar_every = 1*@RHO@
 IOScalar::outScalar_vars  = "
    ML_WaveToy_DG4::WT_u
    ML_WaveToy_DG4::WT_rho
@@ -115,12 +117,14 @@ IOScalar::outScalar_vars  = "
    ML_WaveToy_DG4::WT_urhs
    ML_WaveToy_DG4::WT_rhorhs
    ML_WaveToy_DG4::WT_energy
+   ML_WaveToy_DG4::WT_weight
+   ML_WaveToy_DG4::WT_errenergy
 "
 
 IOASCII::one_file_per_group = yes
 IOASCII::out_precision      = 17
 
-IOASCII::out1D_every = 1#*@RHO@
+IOASCII::out1D_every = 1*@RHO@
 IOASCII::out1D_vars  = "
    grid::coordinates
    CarpetReduce::weight
@@ -130,4 +134,35 @@ IOASCII::out1D_vars  = "
    ML_WaveToy_DG4::WT_urhs
    ML_WaveToy_DG4::WT_rhorhs
    ML_WaveToy_DG4::WT_energy
+   ML_WaveToy_DG4::WT_errenergy
+   ML_WaveToy_DG4::WT_weight
+"
+
+IOHDF5::one_file_per_group = yes
+IOHDF5::out1D_every = 1*@RHO@
+IOHDF5::out1D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_rho
+   ML_WaveToy_DG4::WT_du
+   ML_WaveToy_DG4::WT_urhs
+   ML_WaveToy_DG4::WT_rhorhs
+   ML_WaveToy_DG4::WT_energy
+   ML_WaveToy_DG4::WT_errenergy
+   ML_WaveToy_DG4::WT_weight   
+"
+
+IOHDF5::out3D_every = 1*@RHO@
+IOHDF5::out3D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_rho
+   ML_WaveToy_DG4::WT_du
+   ML_WaveToy_DG4::WT_urhs
+   ML_WaveToy_DG4::WT_rhorhs
+   ML_WaveToy_DG4::WT_energy
+   ML_WaveToy_DG4::WT_errenergy
+   ML_WaveToy_DG4::WT_weight
 "

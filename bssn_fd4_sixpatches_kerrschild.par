@@ -45,11 +45,7 @@ ActiveThorns = "
 # Grid
 #############################################################
 
-# Required for multipatch
 CartGrid3D::type               = "multipatch"
-CartGrid3D::set_coordinate_ranges_on = "all maps"
-
-# The name of the sixpatches system
 Coordinates::coordinate_system = "Thornburg04nc"
 
 Coordinates::h_radial            =   1.0/(5*@RHO@)   # (order+1)*n cells

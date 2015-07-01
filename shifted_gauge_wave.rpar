@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2014-06-12 22:14:30 (jonah)>
+# Time-stamp: <2015-06-03 17:59:48 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -219,6 +219,15 @@ IOHDF5::out1D_vars           = "
    ShiftedGaugeWave::metric_exact
    ShiftedGaugeWave::curv_exact
 "
+
+IOHDF5::out3D_vars           = "
+   grid::coordinates
+   CarpetReduce::weight
+   ADMBase::metric
+   ADMBase::curv
+   ShiftedGaugeWave::metric_exact
+   ShiftedGaugeWave::curv_exact
+"
 """
 # ----------------------------------------------------------------------    
 
@@ -321,6 +330,15 @@ IOASCII::out1D_vars           ="
 "
 
 IOHDF5::out1D_vars           = "
+  ADMBase::gxx
+  ADMBase::kxx
+  CL_BSSN_DG_P4::gt11
+  CL_BSSN_DG_P4::phi
+  CL_BSSN_DG_P4::phirhs
+  grid::coordinates
+"
+
+IOHDF5::out3D_vars           = "
   ADMBase::gxx
   ADMBase::kxx
   CL_BSSN_DG_P4::gt11
@@ -599,6 +617,7 @@ IOASCII::out_precision = 17
 IOASCII::out1D_every          = $every
 IOASCII::one_file_per_group   = yes
 IOHDF5::out1D_every          = $every
+IOHDF5::out3D_every          = $every
 IOHDF5::one_file_per_group   = yes
 """).substitute(every=out_info_every,parfile="$parfile")
 

@@ -3,7 +3,7 @@
 # robust_stability.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2014-05-23 16:05:27 (jonah)>
+# Time-stamp: <2015-06-03 22:44:54 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -19,9 +19,9 @@ from string import Template
 ######################################################################
 # Number of grid points along the propogation axes.
 # The minimum number should be 20.
-rho = int(eval("@RHO@")) # number of propogation grid points = 2*(order+1)*rho
+rho = int(eval("@RHO@")) # number of propogation grid points = (order+1)*rho
 
-amplitude = 1e-10/(rho**2)
+amplitude = 256*1e-10/(rho**2)
 period = 1
 
 # Grid parameters
@@ -200,6 +200,11 @@ IOHDF5::out1D_vars           = "
   ADMBase::gxy
   grid::coordinates
 "
+
+IOHDF5::out3D_vars           = "
+  ADMBase::metric
+  grid::coordinates
+"
 """
 FD_BSSN_EXTRA_PARAMS += FINITE_DIFFERENCES_EXTRA_PARAMS + FD_BSSN_DISSIPATION_PARAMS
 FD_BSSN = Formulation("FD_BSSN",
@@ -264,6 +269,11 @@ IOASCII::out1D_vars           ="
 
 IOHDF5::out1D_vars           = "
   ADMBase::gxy
+  grid::coordinates
+"
+
+IOHDF5::out3D_vars           = "
+  ADMBase::metric
   grid::coordinates
 "
 """
@@ -334,6 +344,11 @@ IOHDF5::out1D_vars           = "
   CL_BSSN_DG_P4::gt11
   CL_BSSN_DG_P4::phi
   CL_BSSN_DG_P4::phirhs
+  grid::coordinates
+"
+
+IOHDF5::out3D_vars           = "
+  ADMBase::metric
   grid::coordinates
 "
 """).substitute(order_plus_one=order+1,order=order)
@@ -416,6 +431,11 @@ IOHDF5::out1D_vars           = "
   ADMBase::gxy
   ADMBase::lapse
   ADMBase::shift
+  grid::coordinates
+"
+
+IOHDF5::out3D_vars           = "
+  ADMBase::metric
   grid::coordinates
 "
 """).substitute(order_plus_one=order+1,order=order)
@@ -597,7 +617,12 @@ IOASCII::out_precision = 17
 IOASCII::out1D_every          = 50
 IOASCII::one_file_per_group   = yes
 IOHDF5::out1D_every          = 50
+IOHDF5::out3D_every          = 50
 IOHDF5::one_file_per_group   = yes
+
+# IOHDF5::output_symmetry_points = yes
+# IOHDF5::out3D_ghosts           = yes
+# IOHDF5::out3D_outer_ghosts     = yes
 """
 
 
