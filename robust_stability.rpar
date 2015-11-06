@@ -3,7 +3,7 @@
 # robust_stability.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-06-03 22:44:54 (jmiller)>
+# Time-stamp: <2015-11-06 11:05:46 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -50,7 +50,12 @@ dgfe_dt_factor = 0.05
 ######################################################################
 my_formulation = "@FORMULATION@"
 filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
-order = 4
+
+default_order = 4
+try:
+    order = int(eval("@ORDER@"))
+except:
+    order = default_order
 
 numcells_x = (order+1)*rho
 numcells_y = numcells_x 
@@ -59,7 +64,7 @@ dx = abs(xmax-xmin)/numcells_x
 
 # If we are using a finite differences approach, xmin can't actually
 # be xmin. We need to shift it by the lattice spacing.
-if ((my_formulation != 'DGFE_FOBSSN') and (my_formulation != 'DGFE_BSSN')):
+if "DGFE" not in my_formulation:
     xmin += dx/2.0
     xmax += dx/2.0
     using_dissipation = False
@@ -441,13 +446,16 @@ IOHDF5::out3D_vars           = "
 """).substitute(order_plus_one=order+1,order=order)
 
 DGFE_BSSN = Formulation("DGFE_BSSN",
-                   ["ML_BSSN_DG4"],
-                   "ML_BSSN_DG4",
-                   DGFE_BSSN_GAUGE_CONDITIONS,
-                   DGFE_BSSN_EXTRA_PARAMS)
+                        ["ML_BSSN_DG%s" % order],
+                        "ML_BSSN_DG%s" % order,
+                        DGFE_BSSN_GAUGE_CONDITIONS,
+                        DGFE_BSSN_EXTRA_PARAMS)
 
 # ----------------------------------------------------------------------
-formulations = {'FD_FOBSSN':FD_FOBSSN,'FD_BSSN':FD_BSSN,'DGFE_FOBSSN':DGFE_FOBSSN,'DGFE_BSSN':DGFE_BSSN}
+formulations = {'FD_FOBSSN':FD_FOBSSN,
+                'FD_BSSN':FD_BSSN,
+                'DGFE_FOBSSN':DGFE_FOBSSN,
+                'DGFE_BSSN':DGFE_BSSN}
 # ----------------------------------------------------------------------
 
 
