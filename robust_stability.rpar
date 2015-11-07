@@ -3,7 +3,7 @@
 # robust_stability.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-07 12:20:38 (jmiller)>
+# Time-stamp: <2015-11-07 17:59:12 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -375,23 +375,23 @@ DGFE_FOBSSN = Formulation("DGFE_FOBSSN",
 # ----------------------------------------------------------------------
 # DGFE_BSSN
 # ----------------------------------------------------------------------
-DGFE_BSSN_GAUGE_CONDITIONS = """
-ML_BSSN_DG4::harmonicN           = 1     # 1+log
-ML_BSSN_DG4::harmonicF           = 2.0   # 1+log
-ML_BSSN_DG4::shiftFormulation    = 0     # 1+log
-ML_BSSN_DG4::ShiftGammaCoeff     = 0.75
-ML_BSSN_DG4::BetaDriver          = 1.0
-ML_BSSN_DG4::advectLapse         = 1
-ML_BSSN_DG4::advectShift         = 1
-ML_BSSN_DG4::minimumLapse        = 0.0
-ML_BSSN_DG4::conformalMethod     = 1
-ML_BSSN_DG4::epsDiss             = 0.0
-ML_BSSN_DG4::epsJump             = 0.0
-"""
+DGFE_BSSN_GAUGE_CONDITIONS = Template("""
+ML_BSSN_DG${order}::harmonicN           = 1     # 1+log
+ML_BSSN_DG${order}::harmonicF           = 2.0   # 1+log
+ML_BSSN_DG${order}::shiftFormulation    = 0     # 1+log
+ML_BSSN_DG${order}::ShiftGammaCoeff     = 0.75
+ML_BSSN_DG${order}::BetaDriver          = 1.0
+ML_BSSN_DG${order}::advectLapse         = 1
+ML_BSSN_DG${order}::advectShift         = 1
+ML_BSSN_DG${order}::minimumLapse        = 0.0
+ML_BSSN_DG${order}::conformalMethod     = 1
+ML_BSSN_DG${order}::epsDiss             = 0.0
+ML_BSSN_DG${order}::epsJump             = 0.0
+""").substitute(order=order)
 
 DGFE_BSSN_EXTRA_PARAMS = Template("""
 # Extra grid information
-ML_BSSN_DG4::tile_size = $order_plus_one   # order+1
+ML_BSSN_DG${order}::tile_size = $order_plus_one   # order+1
 
 Carpet::ghost_size                      = 1
 Carpet::granularity                     = $order_plus_one # order+1
@@ -402,15 +402,15 @@ Carpet::poison_new_timelevels           = no  # does not work with persistent RH
 MethodOfLines::init_RHS_zero = no
 
 # Extra initial data
-ML_BSSN_DG4::initial_boundary_condition = "Minkowski"   # can't extrapolate
-ML_BSSN_DG4::rhs_boundary_condition     = "zero"        # newrad doesn't work
+ML_BSSN_DG${order}::initial_boundary_condition = "Minkowski"   # can't extrapolate
+ML_BSSN_DG${order}::rhs_boundary_condition     = "zero"        # newrad doesn't work
 
 # NaN Checker
 NaNChecker::check_every     = 1
 NaNChecker::verbose         = "all"
 NaNChecker::action_if_found = "terminate"
 NaNChecker::check_vars      = "
-ML_BSSN_DG4::gt11
+ML_BSSN_DG${order}::gt11
 "
 
 CarpetIOBasic::outInfo_vars         = "
@@ -418,7 +418,7 @@ CarpetIOBasic::outInfo_vars         = "
    SystemStatistics::maxrss_mb
    SystemStatistics::swap_used_mb
    ADMBase::gxy
-   ML_BSSN_DG4::H
+   ML_BSSN_DG${order}::H
 "
 
 CarpetIOScalar::outScalar_vars      = "
@@ -426,7 +426,7 @@ CarpetIOScalar::outScalar_vars      = "
    ADMBase::gxy
    ADMBase::lapse
    ADMBase::shift
-   ML_BSSN_DG4::H
+   ML_BSSN_DG${order}::H
    grid::coordinates
 "
 
@@ -434,7 +434,7 @@ IOASCII::out1D_vars           ="
    ADMBase::gxy
    ADMBase::lapse
    ADMBase::shift
-   ML_BSSN_DG4::gt11
+   ML_BSSN_DG${order}::gt11
    grid::coordinates
 "
 
