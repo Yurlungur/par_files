@@ -70,9 +70,9 @@ Cactus::cctk_final_time = @TFINAL@
 Time::timestep_method = "given"
 Time::timestep        = @BASESTEP@/@RHO@
 
-MethodOfLines::ODE_method             = "RK4"
-MethodOfLines::MoL_Intermediate_Steps = 4
-MethodOfLines::MoL_Num_Scratch_Levels = 1
+MethodOfLines::ODE_method             = "RK87"
+MethodOfLines::MoL_Intermediate_Steps = 13
+MethodOfLines::MoL_Num_Scratch_Levels = 13
 
 MethodOfLines::init_RHS_zero = no
 
