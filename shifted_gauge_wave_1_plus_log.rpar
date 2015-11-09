@@ -1,0 +1,630 @@
+#!/usr/bin/env python2
+
+# shifted_gauge_wave.rpar
+
+# Parameter file for the gaugewave, all formulations
+# Time-stamp: <2015-11-09 09:33:45 (jmiller)>
+
+# These are generically what you want for a parameter file
+# ----------------------------------------------------------------------
+from math import *
+import sys
+import re
+from string import Template
+# ----------------------------------------------------------------------
+
+######################################################################
+# User-defined parameters
+######################################################################
+# The order of the method
+default_order = 4
+try:
+    order = int(eval("@ORDER@"))
+except:
+    order = default_order
+
+# Wave parameters
+amplitude = 0.01
+period = 1.0
+
+# Grid parameters
+xmin = -0.5
+xmax = 0.5
+
+# Whether checkpointing is on or off
+checkpointing = False
+# Whether or not to use dissipation
+using_dissipation=False
+
+# Courant number is different
+fd_dt_factor = 0.25
+dgfe_dt_factor = 0.1 # This may need to be set even lower. 
+
+# Set this to run the simulation for only a short time.
+default_debugging=False
+try:
+    debugging = bool(int("@DEBUGGING@"))
+except:
+    debugging = default_debugging
+
+# Number of grid points along the propogation axis. The other two axes
+# have a trivial number. The minimum number should be 20. Propogation
+# is along the x-axis
+default_rho = 2
+try:
+    rho = int(eval("@RHO@")) # number of propogation grid points = 2*(order+1)*rho
+except:
+    rho = default_rho
+
+# Whether to evolve the gaugewave on the diagonal or along the x-axis
+default_diagonal_value = True
+try: # Diagonal accepts either one or zero
+    diagonal = bool(int("@DIAGONAL@"))
+except:
+    diagonal = default_diagonal_value
+
+# Number of periods
+default_num_periods = 1
+try:
+    num_periods = int(eval("@PERIODS@"))
+except:
+    num_periods = default_num_periods
+# --------------------------------------------------------------------
+
+######################################################################
+# Calculations
+######################################################################
+if debugging:
+    num_periods = 0.1
+    out_info_every = 1
+else:
+    out_info_every = 2*rho
+
+my_formulation = "@FORMULATION@"
+filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
+
+# NAMES
+DG_BSSN_NAME="ML_BSSN_DG%s" % order
+FD_BSSN_NAME="ML_BSSN_FD%s" % order
+
+# Cells
+numcells_x = (order+1)*2*rho
+numcells_y = numcells_x if diagonal else (order+1)
+numcells_z = numcells_y
+dx = abs(xmax-xmin)/numcells_x
+
+# If we are using a finite differences approach, xmin can't actually
+# be xmin. We need to shift it by the lattice spacing.
+if my_formulation not in ['DGFE_FOBSSN','DGFE_BSSN']:
+    xmin += dx/2.0
+    xmax += dx/2.0
+    dt_factor=fd_dt_factor
+else:
+    dt_factor=dgfe_dt_factor
+
+# Dissipation is not enabled for DGFE or FOZ4
+if my_formulation in ['DGFE_FOBSSN','FOZ4']:
+    using_dissipation = False
+
+ymin = xmin if diagonal else xmin/(2*rho)
+ymax = xmax if diagonal else xmax/(2*rho)
+zmin = ymin 
+zmax = ymax 
+    
+my_final_time = num_periods * period
+
+if diagonal:
+    period /= sqrt(3.0)
+# Euler rotation angles for the wave
+if diagonal:
+    # Derived from vectors that rotate [1,0,0] into 1/sqrt(3)*[1,1,1]
+    euler_frac = 1.0/13
+    euler_shift = 5.0 - 2.0*sqrt(3.0)
+    euler_psi = -acos(-sqrt(euler_frac*euler_shift))
+    euler_phi = acos(sqrt(euler_frac*euler_shift))
+    euler_theta = acos((1.0/6.0)*(3.0 + sqrt(3.0)))
+else:
+    euler_psi = 0
+    euler_phi = 0
+    euler_theta = 0
+
+dissipation_epsilon = 0.1 if using_dissipation else 0
+
+######################################################################
+# FORMULATIONS
+######################################################################
+# Data structure
+# ----------------------------------------------------------------------
+class Formulation:
+    """
+    A simple container class for a formulation.
+    """
+    admbase_stuff=Template("""
+ADMBase::evolution_method               = "$name"
+ADMBase::lapse_evolution_method         = "$name"
+ADMBase::shift_evolution_method         = "$name"
+ADMBase::dtlapse_evolution_method       = "$name"
+ADMBase::dtshift_evolution_method       = "$name"
+""")
+    header=Template("""
+#############################################################
+# $name
+#############################################################
+
+""")
+    gauge_header="""
+# Gauge conditions
+"""
+
+    @classmethod
+    def make_active_thorns_line(self,string_list):
+        "Makes a string list for active thorns"
+        outstring = 'ActiveThorns = "\n'
+        for i in string_list:
+            outstring += "   %s\n" % i
+        outstring+='"\n'
+        return outstring
+    
+    def __init__(self,name,
+                 active_thorns,
+                 evolution_method,
+                 gauge_conditions,
+                 rest = False):
+        self.name = name
+        self.active_thorns = self.make_active_thorns_line(active_thorns)
+        self.evolution_lines = self.admbase_stuff.substitute(name=evolution_method)
+        self.gauge_conditions=self.gauge_header + gauge_conditions
+        self.rest = rest
+
+    def make_par_string(self):
+        "Makes a string to feed to a parameter file"
+        outstring = self.header.substitute(name=self.name)
+        outstring += self.active_thorns + '\n'
+        outstring += self.evolution_lines + '\n'
+        outstring += self.gauge_conditions
+        if self.rest:
+            outstring += self.rest
+            outstring += '\n'
+        return outstring
+    def __str__(self):
+        return self.make_par_string()
+
+
+
+# ----------------------------------------------------------------------
+# Some common stuff
+# ----------------------------------------------------------------------
+DEFAULT_OUTPUT_VARIABLES="""
+CarpetIOBasic::outInfo_vars         = "
+   Carpet::physical_time_per_hour
+   SystemStatistics::maxrss_mb
+   SystemStatistics::swap_used_mb
+"
+
+CarpetIOScalar::outScalar_vars      = "
+   ADMBase::metric
+   ADMBase::curv
+"
+
+IOASCII::out1D_vars           =" 
+   grid::coordinates
+   CarpetReduce::weight
+   ADMBase::metric
+   ADMBase::curv
+"
+
+IOHDF5::out1D_vars           = "
+   grid::coordinates
+   CarpetReduce::weight
+   ADMBase::metric
+   ADMBase::curv
+"
+
+IOHDF5::out3D_vars           = "
+   grid::coordinates
+   CarpetReduce::weight
+   ADMBase::metric
+   ADMBase::curv
+"
+"""
+# ----------------------------------------------------------------------    
+
+
+
+# ----------------------------------------------------------------------
+# DGFE_BSSN
+# ----------------------------------------------------------------------
+DGFE_BSSN_GAUGE_CONDITIONS=Template("""
+$name::harmonicN           = 1     # 1+log
+$name::harmonicF           = 2.0   # 1+log
+$name::ShiftGammaCoeff     = 0.0   # 1+log
+$name::BetaDriver          = 1.0
+$name::advectLapse         = 1
+$name::advectShift         = 1
+$name::minimumLapse        = 0.0
+$name::conformalMethod     = 1 # 1 for W, 0 for phi
+$name::epsDiss             = 0.0
+$name::epsJump             = 0.0
+# $name::harmonicShift       = 1 # Not sure about this
+""").substitute(name=DG_BSSN_NAME)
+
+DGFE_BSSN_EXTRA_PARAMS = Template("""
+# Extra grid information
+Carpet::ghost_size                      = 1
+Carpet::granularity                     = $order_plus_one   # order+1
+Carpet::granularity_boundary            = 1
+
+# Extra initial data
+$name::initial_boundary_condition = "Minkowski" # can't extrapolate
+$name::rhs_boundary_condition = "zero"          # newrad doesn't work
+
+# Set the tile size
+$name::tile_size = $order_plus_one
+""").substitute(name=DG_BSSN_NAME,
+                order=order,
+                order_plus_one=order+1)
+
+DGFE_BSSN = Formulation("DGFE_BSSN",
+                        ["ML_BSSN_DG4"],
+                        DG_BSSN_NAME,
+                        DGFE_BSSN_GAUGE_CONDITIONS,
+                        DGFE_BSSN_EXTRA_PARAMS+DEFAULT_OUTPUT_VARIABLES)
+# ----------------------------------------------------------------------
+
+
+# DGFE_FOBSSN
+# ----------------------------------------------------------------------
+DGFE_FOBSSN_GAUGE_CONDITIONS="""
+CL_BSSN_DG_P4::harmonicN           = 1     # 1+log
+CL_BSSN_DG_P4::harmonicF           = 2.0   # 1+log
+CL_BSSN_DG_P4::ShiftGammaCoeff     = 0.0
+CL_BSSN_DG_P4::BetaDriver          = 1.0
+# CL_BSSN_DG_P4::harmonicShift       = 1
+"""
+
+DGFE_FOBSSN_EXTRA_PARAMS = Template("""
+# Extra grid information
+Carpet::ghost_size                      = 1
+Carpet::granularity                     = $order_plus_one   # order+1
+Carpet::granularity_boundary            = 1
+
+# Note that this has to be equal to the hard-coded value
+# in CL_BSSN_DG_P4
+SDGMGrid::sdgm_order                    = $order
+HRSCCore::legendre_order                = $order
+
+# NaN Checker
+NaNChecker::check_every     = 1
+NaNChecker::verbose         = "all"
+NaNChecker::action_if_found = "terminate"
+NaNChecker::check_vars      = "
+CL_BSSN_DG_P4::gt11
+"
+""").substitute(order=order,
+                order_plus_one=order+1)
+
+DGFE_FOBSSN_OUTPUT_PARAMS="""
+CarpetIOBasic::outInfo_vars         = "
+   Carpet::physical_time_per_hour
+   SystemStatistics::maxrss_mb
+   SystemStatistics::swap_used_mb
+   ADMBase::alp
+   ADMBase::gxx
+   ADMBase::kxx
+"
+
+CarpetIOScalar::outScalar_vars      = "
+   ADMBase::alp
+   ADMBase::gxx
+   ADMBase::kxx
+"
+
+IOASCII::out1D_vars           =" 
+  ADMBase::gxx
+  ADMBase::kxx
+  CL_BSSN_DG_P4::gt11
+  grid::coordinates
+"
+
+IOHDF5::out1D_vars           = "
+  ADMBase::gxx
+  ADMBase::kxx
+  CL_BSSN_DG_P4::gt11
+  CL_BSSN_DG_P4::phi
+  CL_BSSN_DG_P4::phirhs
+  grid::coordinates
+"
+
+IOHDF5::out3D_vars           = "
+  ADMBase::gxx
+  ADMBase::kxx
+  CL_BSSN_DG_P4::gt11
+  CL_BSSN_DG_P4::phi
+  CL_BSSN_DG_P4::phirhs
+  grid::coordinates
+"
+"""
+
+DGFE_FOBSSN = Formulation("DGFE_FOBSSN",
+                          ["CL_BSSN_DG_P4",
+                           "CL_BSSN_DG_P4_Helper",
+                           "HRSCCore",
+                           "SDGMGrid"],
+                          "CL_BSSN_DG_P4",
+                          DGFE_FOBSSN_GAUGE_CONDITIONS,
+                          DGFE_FOBSSN_EXTRA_PARAMS+DGFE_FOBSSN_OUTPUT_PARAMS)
+# ----------------------------------------------------------------------
+
+
+
+# Some params used for all finite differences approaches
+# ----------------------------------------------------------------------
+FINITE_DIFFERENCES_EXTRA_PARAMS=Template("""
+Coordinates::outer_boundary_size        = $outer_boundary_size # order/2 + 1
+Carpet::ghost_size                      = $ghost_size # order/2 + 1
+
+""").substitute(outer_boundary_size=order/2 + 1,
+                ghost_size=order/2 + 1)
+# ----------------------------------------------------------------------
+
+
+
+# FD_BSSN
+# ----------------------------------------------------------------------
+FD_BSSN_GAUGE_CONDITIONS=Template("""
+$name::harmonicN           = 1     # 1+log
+$name::harmonicF           = 2.0   # 1+log
+$name::shiftGammaCoeff     = 0.0
+$name::betaDriver          = 1.0
+$name::advectLapse         = 1
+$name::advectShift         = 1
+$name::minimumLapse        = 0.0
+$name::conformalMethod     = 1     # 1 for W, 0 for phi
+$name::epsDiss             = 0.0
+$name::epsJump             = 0.0
+""").substitute(name=FD_BSSN_NAME)
+
+FD_BSSN_EXTRA_PARAMS = FINITE_DIFFERENCES_EXTRA_PARAMS\
+    +DEFAULT_OUTPUT_VARIABLES
+
+
+FD_BSSN = Formulation("FD_BSSN",
+                      ["ML_BSSN_FD4"],
+                      FD_BSSN_NAME,
+                      FD_BSSN_GAUGE_CONDITIONS,
+                      FD_BSSN_EXTRA_PARAMS)
+# ----------------------------------------------------------------------
+
+
+
+# FD_FOBSSN
+# ----------------------------------------------------------------------
+FD_FOBSSN_GAUGE_CONDITIONS="""
+CL_BSSN::harmonicN           = 1      # 1+log
+CL_BSSN::harmonicF           = 2.0    # 1+log
+# Set the additional required harmonic gauge conditions here
+CL_BSSN::BetaDriver          = 1.0
+# CL_BSSN::harmonicShift       = 1
+CL_BSSN::MinimumLapse        = 1.0e-8
+CL_BSSN::fdOrder             = 4
+"""
+FD_FOBSSN_DISSIPATION_PARAMS=Template("""
+Dissipation::epsdis = $dissipation_epsilon
+Dissipation::order = 5
+Dissipation::vars  = "
+   CL_BSSN::CL_log_confac
+   CL_BSSN::CL_metric
+   CL_BSSN::CL_trace_curv
+   CL_BSSN::CL_curv
+   CL_BSSN::CL_Gamma
+   CL_BSSN::CL_lapse
+   CL_BSSN::CL_shift
+   CL_BSSN::CL_dtshift
+   CL_BSSN::CL_dlog_confac
+   CL_BSSN::CL_dmetric
+   CL_BSSN::CL_dlapse
+   CL_BSSN::CL_dshift
+"
+""").substitute(dissipation_epsilon=dissipation_epsilon)
+
+FD_FOBSSN_EXTRA_PARAMS = FINITE_DIFFERENCES_EXTRA_PARAMS
+
+FD_FOBSSN = Formulation("FD_FOBSSN",
+                        ["CL_BSSN","CL_BSSN_Helper","Dissipation"],
+                        "CL_BSSN",
+                        FD_FOBSSN_GAUGE_CONDITIONS,
+                        FD_FOBSSN_EXTRA_PARAMS+DEFAULT_OUTPUT_VARIABLES)
+
+# ----------------------------------------------------------------------
+formulations = {'FD_BSSN':FD_BSSN,
+                'FD_FOBSSN':FD_FOBSSN,
+                'DGFE_BSSN':DGFE_BSSN,
+                'DGFE_FOBSSN':DGFE_FOBSSN}
+# ----------------------------------------------------------------------
+
+# Boiler plate code
+# ----------------------------------------------------------------------
+BOILER_PLATE_THORNS= """
+#############################################################
+# Thorns
+#############################################################
+ActiveThorns = "
+  ADMBase
+  ADMCoupling
+  ADMMacros
+  Boundary
+  Carpet
+  CarpetIOASCII
+  CarpetIOBasic
+  CarpetIOHDF5
+  CarpetIOScalar
+  CarpetLib
+  CarpetReduce
+  CartGrid3d
+  CoordBase
+  CoordGauge
+  Coordinates
+  Formaline
+  GenericFD
+  hwloc
+  IOUtil
+  LoopControl
+  MoL
+  NanChecker
+  NewRad
+  Periodic
+  ShiftedGaugeWave
+  Slab
+  SpaceMask
+  SphericalSurface
+  StaticConformal
+  SymBase
+  SystemStatistics
+  Time
+  TmunuBase
+"
+"""
+
+BOILER_PLATE_GRID = Template("""
+#############################################################
+# Grid
+#############################################################
+
+Coordinates::coordinate_system          = "Cartesian"
+
+Coordinates::store_jacobian             = no
+Coordinates::store_jacobian_derivative  = no
+Coordinates::store_inverse_Jacobian     = no
+Coordinates::store_volume_form          = no
+
+Coordinates::stagger_patch_boundaries   = yes
+Coordinates::stagger_outer_boundaries   = yes
+
+Coordinates::patch_xmin                 = $xmin
+Coordinates::patch_ymin                 = $ymin
+Coordinates::patch_zmin                 = $zmin
+
+Coordinates::patch_xmax                 = $xmax
+Coordinates::patch_ymax                 = $ymax
+Coordinates::patch_zmax                 = $zmax
+
+Coordinates::ncells_x                   = $numcells_x   # 2*(order+1)*n
+Coordinates::ncells_y                   = $numcells_y
+Coordinates::ncells_z                   = $numcells_z
+
+CartGrid3D::type                        = "multipatch"
+Periodic::periodic = "yes"
+Coordinates::register_symmetry = "no"
+
+""").substitute(xmin=xmin,ymin=ymin,zmin=zmin,
+                xmax=xmax,ymax=ymax,zmax=zmax,
+                numcells_x=numcells_x,
+                numcells_y=numcells_y,
+                numcells_z=numcells_z)
+                
+
+BOILER_PLATE_CARPET = """
+#############################################################
+# Carpet
+#############################################################
+
+Carpet::domain_from_multipatch          = "yes"
+Carpet::max_refinement_levels           = 1
+Carpet::num_integrator_substeps         = 4
+Carpet::output_timer_tree_every         = 1
+LoopControl::verbose                    = no
+
+Carpet::poison_new_timelevels  = no # Does not work with persistent RHS
+"""
+
+BOILER_PLATE_TIME_INTEGRATION = Template("""
+#############################################################
+# Time integration
+#############################################################
+
+Cactus::terminate                       = "time"
+Cactus::cctk_final_time                 = $final
+
+MoL::ODE_Method                         = "RK4"
+MoL::MoL_Intermediate_Steps             = 4
+MoL::MoL_Num_Scratch_Levels             = 1
+
+Time::dtfac                             = $dt_factor
+
+MethodOfLines::init_RHS_zero          = no
+MethodOfLines::MoL_NaN_Check          = "yes"
+""").substitute(dt_factor=dt_factor,final=my_final_time)
+
+BOILER_PLATE_INITIAL_DATA = Template("""
+#############################################################
+# Initial data
+#############################################################
+
+ADMBase::initial_data                = "ShiftedGaugeWave"
+ADMBase::initial_lapse               = "ShiftedGaugeWave"
+ADMBase::initial_shift               = "ShiftedGaugeWave"
+ADMBase::initial_dtlapse             = "ShiftedGaugeWave"
+ADMBase::initial_dtshift             = "ShiftedGaugeWave"
+
+ShiftedGaugeWave::amp                          = $amplitude
+ShiftedGaugeWave::period                       = $period
+
+ShiftedGaugeWave::psi = $psi
+ShiftedGaugeWave::theta = $theta
+ShiftedGaugeWave::phi = $phi
+
+# Outputs exact data too. Convenient for comparisons.
+ShiftedGaugeWave::exact_method = "ShiftedGaugeWave"
+""").substitute(amplitude=amplitude,period=period,
+                psi=euler_psi,theta=euler_theta,phi=euler_phi)
+
+BOILER_PLATE_CHECKPOINTING = """
+#############################################################
+# Checkpointing and recovery
+#############################################################
+
+CarpetIOHDF5::checkpoint                    = %s
+IO::checkpoint_ID                           = no
+IO::recover                                 = "autoprobe"
+IO::checkpoint_every_walltime_hours         = 3
+IO::out_proc_every                          = 2
+IO::checkpoint_keep                         = 1
+IO::checkpoint_on_terminate                 = yes
+IO::checkpoint_dir                          = "../checkpoints"
+IO::recover_dir                             = "../checkpoints"
+IO::abort_on_io_errors                      = yes
+CarpetIOHDF5::open_one_input_file_at_a_time = yes
+""" % ("yes" if checkpointing else "no")
+
+BOILER_PLATE_OUTPUT =Template("""
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir                   = $parfile
+IO::out_fileinfo              = "all"
+
+CarpetIOBasic::outInfo_every        = $every
+CarpetIOBasic::outInfo_reductions   = "norm2 maximum minimum"
+CarpetIOScalar::outScalar_every     = $every
+CarpetIOScalar::one_file_per_group  = yes
+CarpetIOScalar::outScalar_reductions = "minimum maximum norm2 norm_inf"
+IOASCII::out_precision = 17
+IOASCII::out1D_every          = $every
+IOASCII::one_file_per_group   = yes
+IOHDF5::out1D_every          = $every
+IOHDF5::out3D_every          = $every
+IOHDF5::one_file_per_group   = yes
+""").substitute(every=out_info_every,parfile="$parfile")
+
+par_string = BOILER_PLATE_THORNS\
+    + BOILER_PLATE_CARPET\
+    + BOILER_PLATE_GRID\
+    + BOILER_PLATE_TIME_INTEGRATION\
+    + BOILER_PLATE_INITIAL_DATA\
+    + str(formulations[my_formulation])\
+    + BOILER_PLATE_CHECKPOINTING\
+    + BOILER_PLATE_OUTPUT
+
+with open(filename,'w') as f:
+    f.write(par_string)
