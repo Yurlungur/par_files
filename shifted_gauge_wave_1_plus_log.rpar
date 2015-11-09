@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-09 09:33:45 (jmiller)>
+# Time-stamp: <2015-11-09 10:04:39 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -38,7 +38,8 @@ using_dissipation=False
 
 # Courant number is different
 fd_dt_factor = 0.25
-dgfe_dt_factor = 0.1 # This may need to be set even lower. 
+# In general CFL factor for DG scales as 1/(2*order+1)
+dgfe_dt_factor = np.min(0.1,0.45/(2*order+1))
 
 # Set this to run the simulation for only a short time.
 default_debugging=False

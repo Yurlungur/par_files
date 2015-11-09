@@ -3,7 +3,7 @@
 # robust_stability.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-07 17:59:12 (jmiller)>
+# Time-stamp: <2015-11-09 10:04:45 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -54,8 +54,8 @@ except:
 
 # Courant number is different (but maybe we want them to be the same for comparison sake?)
 fd_dt_factor = 0.1
-dgfe_dt_factor = 0.05
-
+# In general CFL factor for DG scales as 1/(2*order+1)
+dgfe_dt_factor = np.min(0.05,0.45/(2*order+1))
 
 ######################################################################
 # Calculations
