@@ -100,6 +100,7 @@ IO::out_dir = "$parfile"
 
 IOBasic::outInfo_every      = 1*@RHO@
 IOBasic::outInfo_reductions = "sum norm2"
+CarpetIOScalar::outScalar_reductions = "minimum maximum norm2 norm_inf"
 IOBasic::outInfo_vars       = "
    ML_WaveToy_DG4::WT_u
    ML_WaveToy_DG4::WT_energy
@@ -112,6 +113,7 @@ IOScalar::out_precision       = 17
 IOScalar::outScalar_every = 1*@RHO@
 IOScalar::outScalar_vars  = "
    ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_erru
    ML_WaveToy_DG4::WT_rho
    ML_WaveToy_DG4::WT_du
    ML_WaveToy_DG4::WT_urhs
@@ -129,6 +131,7 @@ IOASCII::out1D_vars  = "
    grid::coordinates
    CarpetReduce::weight
    ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_erru
    ML_WaveToy_DG4::WT_rho
    ML_WaveToy_DG4::WT_du
    ML_WaveToy_DG4::WT_urhs
@@ -144,6 +147,7 @@ IOHDF5::out1D_vars  = "
    grid::coordinates
    CarpetReduce::weight
    ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_erru
    ML_WaveToy_DG4::WT_rho
    ML_WaveToy_DG4::WT_du
    ML_WaveToy_DG4::WT_urhs
@@ -158,6 +162,7 @@ IOHDF5::out3D_vars  = "
    grid::coordinates
    CarpetReduce::weight
    ML_WaveToy_DG4::WT_u
+   ML_WaveToy_DG4::WT_erru
    ML_WaveToy_DG4::WT_rho
    ML_WaveToy_DG4::WT_du
    ML_WaveToy_DG4::WT_urhs
