@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-09 10:09:02 (jmiller)>
+# Time-stamp: <2015-11-10 20:41:28 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -16,6 +16,13 @@ from string import Template
 ######################################################################
 # User-defined parameters
 ######################################################################
+# The order of the method
+default_order = 4
+try:
+    order = int(eval("@ORDER@"))
+except:
+    order = default_order
+
 # Wave parameters
 amplitude = 0.01
 period = 1.0
@@ -76,7 +83,6 @@ else:
 
 my_formulation = "@FORMULATION@"
 filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
-order = 4
 
 # NAMES
 DG_BSSN_NAME="ML_BSSN_DG%s" % order
