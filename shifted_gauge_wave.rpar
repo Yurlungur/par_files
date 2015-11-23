@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-23 15:50:42 (jmiller)>
+# Time-stamp: <2015-11-23 15:59:54 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -34,7 +34,7 @@ xmax = 0.5
 # Whether checkpointing is on or off
 checkpointing = False
 # Whether or not to use dissipation
-using_dissipation=False
+using_dissipation=True
 
 # Courant number is different
 fd_dt_factor = 0.25
@@ -79,7 +79,7 @@ if debugging:
     num_periods = 0.1
     out_info_every = 1
 else:
-    out_info_every = 2*rho
+    out_info_every = int(((order+1)/2.)*rho/dt_factor)
 
 my_formulation = "@FORMULATION@"
 filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
@@ -129,7 +129,7 @@ else:
     euler_phi = 0
     euler_theta = 0
 
-dissipation_epsilon = 0.1 if using_dissipation else 0
+dissipation_epsilon = 0.25 if using_dissipation else 0
 
 ######################################################################
 # FORMULATIONS

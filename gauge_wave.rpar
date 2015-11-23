@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-23 15:50:06 (jmiller)>
+# Time-stamp: <2015-11-23 15:56:30 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -101,7 +101,7 @@ if debugging:
     num_periods = 0
     out_info_every = 1
 else:
-    out_info_every = int(((5.0/2.0)*rho)/dt_factor)
+    out_info_every = int((((order+1)/2.0)*rho)/dt_factor)
 
 # Dissipation is not enabled for DGFE or FOZ4
 if my_formulation in ['DGFE_FOBSSN','FOZ4']:
@@ -688,10 +688,10 @@ IO::out_dir                   = $parfile
 IO::out_fileinfo              = "all"
 
 CarpetIOBasic::outInfo_every        = $every
-CarpetIOBasic::outInfo_reductions   = "maximum minimum"
+CarpetIOBasic::outInfo_reductions   = "maximum minimum norm2"
 CarpetIOScalar::outScalar_every     = $every
 CarpetIOScalar::one_file_per_group  = yes
-CarpetIOScalar::outScalar_reductions = "minimum maximum"
+CarpetIOScalar::outScalar_reductions = "minimum maximum norm2"
 IOASCII::out_precision = 17
 IOASCII::out1D_every          = $every
 IOASCII::one_file_per_group   = yes
