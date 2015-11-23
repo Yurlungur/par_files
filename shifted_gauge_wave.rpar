@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-23 12:56:27 (jmiller)>
+# Time-stamp: <2015-11-23 15:50:42 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -541,7 +541,7 @@ BOILER_PLATE_CARPET = """
 
 Carpet::domain_from_multipatch          = "yes"
 Carpet::max_refinement_levels           = 1
-Carpet::num_integrator_substeps         = 4
+Carpet::num_integrator_substeps         = 13
 Carpet::output_timer_tree_every         = 1
 LoopControl::verbose                    = no
 
