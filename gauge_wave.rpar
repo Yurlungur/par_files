@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-03-30 15:11:33 (jmiller)>
+# Time-stamp: <2015-11-23 12:56:20 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -31,7 +31,8 @@ using_dissipation=False
 
 # Courant number is different
 fd_dt_factor = 0.25
-dgfe_dt_factor = 0.1 # This may need to be set even lower. 
+# The CFL factor scales as 1/(2*order+1)
+dgfe_dt_factor = min(0.1,0.45/(2*order+1))
 
 # derivative order
 default_order = 4
@@ -627,9 +628,9 @@ BOILER_PLATE_TIME_INTEGRATION = Template("""
 Cactus::terminate                       = "time"
 Cactus::cctk_final_time                 = $final
 
-MoL::ODE_Method                         = "RK4"
-MoL::MoL_Intermediate_Steps             = 4
-MoL::MoL_Num_Scratch_Levels             = 1
+MoL::ODE_Method                         = "RK87"
+MoL::MoL_Intermediate_Steps             = 13
+MoL::MoL_Num_Scratch_Levels             = 13
 
 Time::dtfac                             = $dt_factor
 

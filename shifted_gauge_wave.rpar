@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-10 20:41:28 (jmiller)>
+# Time-stamp: <2015-11-23 12:56:27 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -556,9 +556,9 @@ BOILER_PLATE_TIME_INTEGRATION = Template("""
 Cactus::terminate                       = "time"
 Cactus::cctk_final_time                 = $final
 
-MoL::ODE_Method                         = "RK4"
-MoL::MoL_Intermediate_Steps             = 4
-MoL::MoL_Num_Scratch_Levels             = 1
+MoL::ODE_Method                         = "RK87"
+MoL::MoL_Intermediate_Steps             = 13
+MoL::MoL_Num_Scratch_Levels             = 13
 
 Time::dtfac                             = $dt_factor
 
