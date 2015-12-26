@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-23 16:02:06 (jmiller)>
+# Time-stamp: <2015-12-25 19:02:36 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -75,12 +75,6 @@ except:
 ######################################################################
 # Calculations
 ######################################################################
-if debugging:
-    num_periods = 0.1
-    out_info_every = 1
-else:
-    out_info_every = int(((order+1)/2.)*rho/dt_factor)
-
 my_formulation = "@FORMULATION@"
 filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
 
@@ -102,6 +96,12 @@ if my_formulation not in ['DGFE_FOBSSN','DGFE_BSSN']:
     dt_factor=fd_dt_factor
 else:
     dt_factor=dgfe_dt_factor
+
+if debugging:
+    num_periods = 0.1
+    out_info_every = 1
+else:
+    out_info_every = int(((order+1)/2.)*rho/dt_factor)
 
 # Dissipation is not enabled for DGFE or FOZ4
 if my_formulation in ['DGFE_FOBSSN','FOZ4']:
