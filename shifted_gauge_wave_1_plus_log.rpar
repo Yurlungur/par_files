@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-12-25 19:02:36 (jmiller)>
+# Time-stamp: <2016-01-25 16:31:48 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -238,7 +238,8 @@ IOHDF5::out3D_vars           = "
 DGFE_BSSN_GAUGE_CONDITIONS=Template("""
 $name::harmonicN           = 1     # 1+log
 $name::harmonicF           = 2.0   # 1+log
-$name::ShiftGammaCoeff     = 0.0   # 1+log
+$name::shiftFormulation    = 0     # 1+log
+$name::ShiftGammaCoeff     = 0.75  # should be 0.75/M (m = 0 in this case)
 $name::BetaDriver          = 1.0
 $name::advectLapse         = 1
 $name::advectShift         = 1
@@ -246,7 +247,7 @@ $name::minimumLapse        = 0.0
 $name::conformalMethod     = 1 # 1 for W, 0 for phi
 $name::epsDiss             = 0.0
 $name::epsJump             = 0.0
-# $name::harmonicShift       = 1 # Not sure about this
+
 """).substitute(name=DG_BSSN_NAME)
 
 DGFE_BSSN_EXTRA_PARAMS = Template("""

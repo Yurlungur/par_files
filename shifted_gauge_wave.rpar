@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-23 15:59:54 (jmiller)>
+# Time-stamp: <2016-01-25 16:33:42 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -247,7 +247,8 @@ DGFE_BSSN_GAUGE_CONDITIONS=Template("""
 $name::harmonicN           = 2     # harmonic
 $name::harmonicF           = 1.0   # harmonic
 $name::shiftFormulation    = 1     # harmonic
-$name::ShiftGammaCoeff     = 0.75 # = 0 # ?
+$name::ShiftGammaCoeff     = 0.75  # evolve shift (gamma driver)
+$name::evolveB             = 1     # evolve shift (harmonic)
 $name::BetaDriver          = 1.0
 $name::advectLapse         = 1
 $name::advectShift         = 1
@@ -255,7 +256,6 @@ $name::minimumLapse        = 0.0
 $name::conformalMethod     = 1 # 1 for W, 0 for phi
 $name::epsDiss             = 0.0
 $name::epsJump             = 0.0
-# $name::harmonicShift       = 1 # Not sure about this
 """).substitute(name=DG_BSSN_NAME)
 
 DGFE_BSSN_EXTRA_PARAMS = Template("""
