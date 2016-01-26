@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2016-01-26 13:57:27 (jmiller)>
+# Time-stamp: <2016-01-26 13:58:31 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -476,7 +476,7 @@ ActiveThorns = "
   NanChecker
   NewRad
   Periodic
-  ShiftedGaugeWave
+  GaugeWave
   Slab
   SpaceMask
   SphericalSurface
@@ -563,21 +563,21 @@ BOILER_PLATE_INITIAL_DATA = Template("""
 # Initial data
 #############################################################
 
-ADMBase::initial_data                = "ShiftedGaugeWave"
-ADMBase::initial_lapse               = "ShiftedGaugeWave"
-ADMBase::initial_shift               = "ShiftedGaugeWave"
-ADMBase::initial_dtlapse             = "ShiftedGaugeWave"
-ADMBase::initial_dtshift             = "ShiftedGaugeWave"
+ADMBase::initial_data                = "GaugeWave"
+ADMBase::initial_lapse               = "GaugeWave"
+ADMBase::initial_shift               = "GaugeWave"
+ADMBase::initial_dtlapse             = "GaugeWave"
+ADMBase::initial_dtshift             = "GaugeWave"
 
-ShiftedGaugeWave::amp                          = $amplitude
-ShiftedGaugeWave::period                       = $period
+GaugeWave::amp                          = $amplitude
+GaugeWave::period                       = $period
 
-ShiftedGaugeWave::psi = $psi
-ShiftedGaugeWave::theta = $theta
-ShiftedGaugeWave::phi = $phi
+GaugeWave::psi = $psi
+GaugeWave::theta = $theta
+GaugeWave::phi = $phi
 
 # Outputs exact data too. Convenient for comparisons.
-ShiftedGaugeWave::exact_method = "ShiftedGaugeWave"
+GaugeWave::exact_method = "GaugeWave"
 """).substitute(amplitude=amplitude,period=period,
                 psi=euler_psi,theta=euler_theta,phi=euler_phi)
 
