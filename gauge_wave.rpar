@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2015-11-23 19:58:14 (jmiller)>
+# Time-stamp: <2016-01-28 15:47:10 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -17,7 +17,7 @@ from string import Template
 # User-defined parameters
 ######################################################################
 # Wave parameters
-amplitude = 0.1
+amplitude = 0.01
 period = 1.0
 
 # Grid parameters
