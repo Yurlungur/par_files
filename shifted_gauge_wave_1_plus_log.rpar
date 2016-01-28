@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2016-01-26 13:57:27 (jmiller)>
+# Time-stamp: <2016-01-28 15:33:06 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -22,6 +22,16 @@ try:
     order = int(eval("@ORDER@"))
 except:
     order = default_order
+
+# How often data is output.
+# by default, it's output every
+# 0.25 periods.
+# TRES multiplies this number
+default_res_factor = 1
+try:
+    res_factor = int(eval("@TRES@"))
+except:
+    res_factor = default_res_factor
 
 # Wave parameters
 amplitude = 0.01
@@ -101,7 +111,7 @@ if debugging:
     num_periods = 0.1
     out_info_every = 1
 else:
-    out_info_every = int(((order+1)/2.)*rho/dt_factor)
+    out_info_every = int(((order+1)/2.)*rho/(dt_factor*res_factor))
 
 # Dissipation is not enabled for DGFE or FOZ4
 if my_formulation in ['DGFE_FOBSSN','FOZ4']:
