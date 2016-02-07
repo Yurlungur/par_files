@@ -136,7 +136,10 @@ ML_BSSN_DG4::advectLapse         = 0
 ML_BSSN_DG4::advectShift         = 0
 ML_BSSN_DG4::minimumLapse        = 0.0
 ML_BSSN_DG4::conformalMethod     = 1      # W
-ML_BSSN_DG4::epsDiss             = 0
+
+# Dissipation:
+# Should be of order maximum over domain of largest variable
+ML_BSSN_DG4::epsDiss             = 1
 ML_BSSN_DG4::epsJump             = 0
 
 #############################################################
