@@ -139,14 +139,14 @@ ML_BSSN_DG4::conformalMethod     = 1      # W
 
 # Dissipation:
 # Should be of order maximum over domain of largest variable
-ML_BSSN_DG4::epsDiss             = 1
+ML_BSSN_DG4::epsDiss             = 3
 ML_BSSN_DG4::epsJump             = 0
 
 #############################################################
 # Analysis
 #############################################################
 
-AHFinderDirect::find_every = 20*@RHORADIAL@
+AHFinderDirect::find_every = 10*@RHORADIAL@
 
 AHFinderDirect::run_at_CCTK_POST_RECOVER_VARIABLES = no
 
@@ -168,7 +168,7 @@ AHFinderDirect::output_OpenDX_control_files = false
 
 IO::out_dir = "$parfile"
 
-IOBasic::outInfo_every      = 20*@RHORADIAL@
+IOBasic::outInfo_every      = 10*@RHORADIAL@
 IOBasic::outInfo_reductions = "sum norm2"
 IOBasic::outInfo_vars       = "
    ML_BSSN_DG4::alpha
@@ -178,7 +178,7 @@ IOBasic::outInfo_vars       = "
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = 20*@RHORADIAL@
+IOScalar::outScalar_every = 10*@RHORADIAL@
 IOScalar::outScalar_vars  = "
    ML_BSSN_DG4::ML_confac
    ML_BSSN_DG4::ML_metric
@@ -219,7 +219,7 @@ IOScalar::outScalar_vars  = "
 
 IOHDF5::one_file_per_group = yes
 
-IOHDF5::out1D_every   = 0 # 20*@RHORADIAL@
+IOHDF5::out1D_every   = 0 # 10*@RHORADIAL@
 IOHDF5::out1D_xline_z = 3.5
 IOHDF5::out1D_yline_z = 3.5
 IOHDF5::out1D_vars    = "
@@ -264,7 +264,7 @@ IOHDF5::out1D_vars    = "
    KerrSchild::dtshift_exact
 "
 
-IOHDF5::out2D_every = 0 # 0*20*@RHORADIAL@
+IOHDF5::out2D_every = 0 # 0*10*@RHORADIAL@
 IOHDF5::out2D_xyplane_z = 3.5
 IOHDF5::out2D_vars  = "
    grid::coordinates
@@ -308,7 +308,7 @@ IOHDF5::out2D_vars  = "
    KerrSchild::dtshift_exact
 "
 
-IOHDF5::out3D_every = 20*@RHORADIAL@
+IOHDF5::out3D_every = 10*@RHORADIAL@
 IOHDF5::out3D_vars  = "
    grid::coordinates
    CarpetReduce::weight
