@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2016-01-28 15:47:10 (jmiller)>
+# Time-stamp: <2016-02-09 12:00:25 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -267,7 +267,7 @@ IOHDF5::out1D_vars           = "
 "
 """)
 else:
-    DEFAULT_OUTPUT_VARIABLES=Template("""
+    OUT_VAR_STRING="""
 CarpetIOBasic::outInfo_vars         = "
    Carpet::physical_time_per_hour
    SystemStatistics::maxrss_mb
@@ -308,7 +308,19 @@ IOHDF5::out1D_vars           = "
    GaugeWave::metric_exact
    GaugeWave::curv_exact
 "
-""")
+"""
+    if diagonal:
+        OUT_VAR_STRING += """
+IOHDF5::out3D_vars           = "
+   grid::coordinates
+   CarpetReduce::weight
+   ADMBase::metric
+   ADMBase::curv
+   GaugeWave::metric_exact
+   GaugeWave::curv_exact
+"
+"""
+    DEFAULT_OUTPUT_VARIABLES=Template(OUT_VAR_STRING)
 # ----------------------------------------------------------------------    
 
 
