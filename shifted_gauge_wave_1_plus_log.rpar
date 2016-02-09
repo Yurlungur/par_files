@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2016-01-28 15:33:06 (jmiller)>
+# Time-stamp: <2016-02-09 01:48:20 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -278,7 +278,7 @@ $name::tile_size = $order_plus_one
                 order_plus_one=order+1)
 
 DGFE_BSSN = Formulation("DGFE_BSSN",
-                        ["ML_BSSN_DG4"],
+                        [DG_BSSN_NAME],
                         DG_BSSN_NAME,
                         DGFE_BSSN_GAUGE_CONDITIONS,
                         DGFE_BSSN_EXTRA_PARAMS+DEFAULT_OUTPUT_VARIABLES)
@@ -402,7 +402,7 @@ FD_BSSN_EXTRA_PARAMS = FINITE_DIFFERENCES_EXTRA_PARAMS\
 
 
 FD_BSSN = Formulation("FD_BSSN",
-                      ["ML_BSSN_FD4"],
+                      [FD_BSSN_NAME],
                       FD_BSSN_NAME,
                       FD_BSSN_GAUGE_CONDITIONS,
                       FD_BSSN_EXTRA_PARAMS)
