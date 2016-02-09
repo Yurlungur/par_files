@@ -3,7 +3,7 @@
 # shifted_gauge_wave.rpar
 
 # Parameter file for the gaugewave, all formulations
-# Time-stamp: <2016-02-09 12:00:25 (jmiller)>
+# Time-stamp: <2016-02-09 12:05:56 (jmiller)>
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -708,6 +708,7 @@ IOASCII::out_precision = 17
 IOASCII::out1D_every          = $every
 IOASCII::one_file_per_group   = yes
 IOHDF5::out1D_every          = $every
+IOHDF5::out3D_every          = $every
 IOHDF5::one_file_per_group   = yes
 """).substitute(every=out_info_every,parfile="$parfile")
 
