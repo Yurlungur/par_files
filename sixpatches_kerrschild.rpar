@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-09 23:42:59 (jmiller)>
+# Time-stamp: <2016-02-09 23:53:19 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -369,7 +369,7 @@ $thorn_name::initial_boundary_condition     = "none"
 $thorn_name::boundary_condition             = "extrapolate"
 $thorn_name::derivatives_boundary_condition = "extrapolate"
 $thorn_name::rhs_boundary_condition         = "none"
-$thorn_name
+
 $thorn_name::harmonicN           = 1      # 1+log
 $thorn_name::harmonicF           = 2.0    # 1+log
 $thorn_name::shiftFormulation    = 0      # Gamma driver
