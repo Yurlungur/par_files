@@ -1,0 +1,521 @@
+#!/usr/bin/env python2
+
+# sixpatches_kerrschild.rpar
+
+# Parameter file for single black hole with excision
+# using sixpatches system. Can use DG or FD stencils.
+# Time-stamp: <2016-02-09 23:42:59 (jmiller)>
+# Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
+
+# These are generically what you want for a parameter file
+# ----------------------------------------------------------------------
+from math import *
+import sys
+import re
+from string import Template
+# ----------------------------------------------------------------------
+
+
+######################################################################
+# User-defined parameters
+######################################################################
+
+# Whether checkpointing is on or off
+checkpointing = False
+# Whether or not to use dissipation
+# for discontinuous Galerkin.
+# It is always used for finite differences.
+using_dissipation=False
+# Whether run is small or big
+production_run=False
+
+M = 1.   # black hole mass
+a = 0.0 # black hole spin
+
+#Event horizon is at R=2*M.
+R_S = 2.*M
+
+# Radius of excision. 
+R_inner = 1.*M
+
+# Outer radius. For production runs, this should be ~100*M.
+default_R_outer = 101*M if production_run else 5*M
+try:
+    R_outer = float(eval("@OUTER@"))
+except:
+    R_outer = default_R_outer
+
+# derivative order
+# Note that for finite differences,
+# we forbid odd orders.
+# For discontinuous Galerkin, odd orders
+# are fine.
+default_order = 4
+try:
+    order = int(eval("@ORDER@"))
+except:
+    order = default_order
+
+# Final time
+default_final_time = 1
+try:
+    final_time = float(eval("@FINAL@"))
+except:
+    final_time = default_final_time
+
+# Number of grid points/elements per M in the radial direction
+# For DG rho is elements/M
+# For DG and FD,
+# (order+1)*rho is (number of grid points)/M
+default_rho = 5
+try:
+    rho = int(eval("@RHO@")) 
+except:
+    rho = default_rho
+
+# Do we use finite differences or discontinuous Galerkin
+# stencils?
+# Choices are DGFE_BSSN and FD_BSSN
+formulation = "@FORMULATION@"
+allowed_formulations = ["DGFE_BSSN","FD_BSSN"]
+assert formulation in allowed_formulations
+
+# This is the strength of the dissipation operator if it is active.
+# This is required for Finite Differences.  It may or may not be
+# required for discontinuous Galerkin.
+#
+# The operators for discontinuous Galerkin and dinite differences are
+# different and require different strengths. For FD, system is
+# unstable for epsdiss > 1/3.
+#
+# For DG, Tadmor suggests in 10.1016/S0377-0427(00)00510-0 that
+# epsdiss be set to approximately the maximum of the quantity to be
+# filtered, to the order+1 power. For the black hole, this is of order
+# 1. However experimentation is needed.
+fd_dissipation_strength = 0.2
+dg_dissipation_strength = 1**(order+1)
+if formulation == "FD_BSSN":
+    epsdiss = fd_dissipation_strength
+elif formulation == "DG_BSSN" and using_dissipation:
+    epsdiss = dg_dissipation_strength
+else:
+    epsdiss = 0
+
+# CFL factors. These are different for finite differences and DG.
+fd_cfl_factor = 0.25 # could be higher?
+# based on experiments for gauge wave
+# for order = 4, translates to 0.05
+#    if rho = 5, dt = 0.01
+dgfe_cfl_factor = min(0.1,0.45/(2*order+1))
+
+# How often we output, based on fractions of M
+output_every_M = 0.5*M
+
+######################################################################
+# Calculations
+######################################################################
+
+# File name
+filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
+
+# Formulation NAMES
+DG_BSSN_NAME= "ML_BSSN_DG%s" % order
+FD_BSSN_NAME= "ML_BSSN_FD%s" % order
+if formulation == "DGFE_BSSN":
+    thorn_name = DG_BSSN_NAME
+else:
+    thorn_name = FD_BSSN_NAME
+
+# width of an element in radial direction
+element_width_radial = M/rho
+
+# We want elements to be roughly cubic at the horizon. We use this
+# criteria to determine how many elements to include radially.
+# In FD this corresponds to dr and d(theta) being approximately equal
+# near the horizon.
+horizon_circumference = 2.*pi*R_S
+inner_circumference = 2*pi*R_inner
+elements_per_circumference = horizon_circumference*rho
+
+# To see full equatorial slice, we need 4 patches.
+# Number of elements per patch is, of course, an integer.
+# We use the ceiling to avoid under-resolving.
+elements_per_patch_angular = int(ceil(elements_per_circumference/4))
+
+# CFL factor
+if formulation == "DGFE_BSSN":
+    cfl_factor = dgfe_cfl_factor
+else:
+    cfl_factor = fd_cfl_factor
+
+# Ghost cells and stencil width depend on order and stencil type
+stencil_width = order+1
+if formulation == "DGFE_BSSN":
+    ghost_cells = 1
+    granularity = order+1
+    granularity_boundary = 1
+else:
+    ghost_cells = order/2
+    granularity = 1
+    granularity_boundary = 0
+
+# Number of grid points per M 
+# in radial direction.
+grid_points_per_M = stencil_width*rho
+
+# Average between grid points
+# in radial direction.
+# In FD this is exact, but in DG it is average over an element
+dr = M/grid_points_per_M
+
+# Grid points per patch in the angular direction
+grid_points_per_patch_angular = stencil_width*elements_per_patch_angular
+rdtheta_min = (pi/2.)*R_inner/grid_points_per_patch_angular
+
+# timestep size
+# Correct formula is: dt = rdtheta_min
+#         but this formula is more difficult to interpret
+#         because it involves pi. Therefore, we use
+#         this simpler, easier to round, formula.
+dt = cfl_factor*dr*0.5
+
+# How often we output, in number of timesteps
+# note weird formula is to ensure that multiple resolutions
+# output at exactly the same number of timesteps.
+# otherwise rounding error could cause weird offsets.
+# factor of 2 exists because rdtheta = 1/2 dr at inner radius
+output_every_timesteps = 2*int(output_every_M/cfl_factor)*rho*stencil_width
+
+# At patch boundaries, interpolation is performed.  For finite
+# differences, this interpolation needs to be the same order as the
+# stencil. But for discontinuous Galerkin methods, this no
+# interpolation is perfomed. Instead, we just copy from the nearest
+# point. This is because, for a Galerkin method, a patch boundary
+# is just an element boundary.
+if formulation == "DGFE_BSSN":
+    interpolator_order = 0
+    shift_edges = "yes"
+else:
+    interpolator_order = order
+    shift_edges = "no"
+
+# Tile size determines how for-loops are arranged for a stencil.
+# For finite differences this may or may not change efficiency.
+# For discontinuous Galerkin methods, the tile size MUST
+# be the same as the stencil size, order+1.
+# A value of -1 means Kranc chooses its own tile size.
+if formulation == "DGFE_BSSN":
+    tile_size = stencil_width
+else:
+    tile_size = -1
+
+# We must set the horizon finder parameters very differently, so these
+# settings are separated from the rest of the parameter file.
+if formulation == "DGFE_BSSN":
+    geometry_interpolator_name = "DGFE"
+    geometry_interpolator_pars = ""
+    surface_interpolator_name = ""
+    surface_interpolator_pars = ""
+else:
+    geometry_interpolator_name = "Lagrange polynomial interpolation"
+    geometry_interpolator_pars = 'AHFinderDirect::geometry_interpolator_pars = "order=%s"' % order
+    surface_interpolator_name = 'AHFinderDirect::surface_interpolator_name  = "Lagrange polynomial interpolation"'
+    surface_interpolator_pars = 'AHFinderDirect::surface_interpolator_pars  = "order=%s"' % order
+
+# --------------------------------------------------------------------
+
+PARAM_STRING=Template("""# sixpatches_kerrschild.par
+# autogenerated from sixpatches_kerrschild.rpar
+# Authors: Jonah Miller and Erik Schnetter
+
+ActiveThorns = "
+   ADMBase
+   ADMCoupling
+   ADMMacros
+   AEILocalInterp
+   AHFinderDirect
+   Boundary
+   Carpet
+   CarpetIOASCII
+   CarpetIOHDF5
+   CarpetIOBasic
+   CarpetIOScalar
+   CarpetInterp
+   CarpetInterp2
+   CarpetLib
+   CarpetReduce
+   CartGrid3D
+   CoordBase
+   CoordGauge
+   Coordinates
+   Formaline
+   GenericFD
+   IOUtil
+   Interpolate2
+   KerrSchild
+   $thorn_name
+   ML_LocalInterp
+   MoL
+   NaNChecker
+   SpaceMask
+   SphericalSurface
+   StaticConformal
+   SymBase
+   SystemStatistics
+   Time
+   TmunuBase
+"
+
+#############################################################
+# Grid
+#############################################################
+
+# Required for multipatch
+CartGrid3D::type               = "multipatch"
+CartGrid3D::set_coordinate_ranges_on = "all maps"
+
+# The name of the sixpatches system
+Coordinates::coordinate_system = "Thornburg04nc"
+
+# Grid points in r direction per M is (2*order+1)*rho
+Coordinates::h_radial            = $dr
+
+Coordinates::sphere_inner_radius = $R_inner
+Coordinates::sphere_outer_radius = $R_outer
+
+# Chosen so that, near event horizon,
+# we have (approximately) that:
+# dr = dtheta = dphi
+Coordinates::n_angular           =  $grid_points_per_patch_angular
+
+Coordinates::stagger_patch_boundaries = yes
+Coordinates::stagger_outer_boundaries = yes
+
+# For FD, should be same order as stencil
+# For DG, copy nearest point
+Interpolate2::interpolator_order = $interpolator_order
+
+# For FD, no. For DG, yes.
+# Artificially shifts patch edges by 1 grid point
+# so that cells exactly overlap.
+Interpolate2::shift_edges        = $shift_edges
+
+Coordinates::store_jacobian            = yes
+Coordinates::store_inverse_jacobian    = no
+Coordinates::store_jacobian_derivative = no
+Coordinates::store_volume_form         = no
+
+GenericFD::jacobian_group            = "Coordinates::jacobian"
+GenericFD::jacobian_derivative_group = "Coordinates::jacobian2"
+
+#############################################################
+# Carpet
+#############################################################
+
+Carpet::domain_from_multipatch = yes
+Carpet::ghost_size             = $ghost_cells
+Carpet::granularity            = $granularity
+Carpet::granularity_boundary   = $granularity_boundary
+
+Carpet::poison_new_timelevels = no   # does not work with persistent RHS
+
+#############################################################
+# Time integration
+#############################################################
+
+Cactus::terminate       = "time"
+Cactus::cctk_final_time = $final_time
+
+Time::timestep_method = "given"
+Time::timestep        = $dt
+
+MethodOfLines::ODE_method             = "RK87"
+MethodOfLines::MoL_Intermediate_Steps = 13
+MethodOfLines::MoL_Num_Scratch_Levels = 13
+
+MethodOfLines::init_RHS_zero = no
+
+MethodOfLines::MoL_NaN_Check = yes
+
+#############################################################
+# ML_BSSN
+#############################################################
+
+# Tile size determines how for-loops are arranged for a stencil.
+# For finite differences this may or may not change efficiency.
+# For discontinuous Galerkin methods, the tile size MUST
+# be the same as the stencil size, order+1.
+# A value of -1 means Kranc chooses its own tile size.
+$thorn_name::tile_size = $tile_size
+
+ADMBase::initial_data    = "KerrSchild"
+ADMBase::initial_lapse   = "KerrSchild"
+ADMBase::initial_shift   = "KerrSchild"
+ADMBase::initial_dtlapse = "KerrSchild"
+ADMBase::initial_dtshift = "KerrSchild"
+
+KerrSchild::M = $M
+KerrSchild::a = $a
+
+KerrSchild::exact_method = "KerrSchild"
+
+ADMBase::evolution_method         = "$thorn_name"
+ADMBase::lapse_evolution_method   = "$thorn_name"
+ADMBase::shift_evolution_method   = "$thorn_name"
+ADMBase::dtlapse_evolution_method = "$thorn_name"
+ADMBase::dtshift_evolution_method = "$thorn_name"
+
+$thorn_name::initial_boundary_condition     = "none"
+$thorn_name::boundary_condition             = "extrapolate"
+$thorn_name::derivatives_boundary_condition = "extrapolate"
+$thorn_name::rhs_boundary_condition         = "none"
+$thorn_name
+$thorn_name::harmonicN           = 1      # 1+log
+$thorn_name::harmonicF           = 2.0    # 1+log
+$thorn_name::shiftFormulation    = 0      # Gamma driver
+$thorn_name::shiftGammaCoeff     = 0.75
+$thorn_name::alphaDriver         = 1.0
+$thorn_name::betaDriver          = 1.0
+$thorn_name::evolveA             = 1
+$thorn_name::evolveB             = 1
+$thorn_name::advectLapse         = 0
+$thorn_name::advectShift         = 0
+$thorn_name::minimumLapse        = 1E-12  # no dividing by zero!
+$thorn_name::conformalMethod     = 1      # W
+
+# Dissipation:
+#
+# This is required for Finite Differences.  It may or may not be
+# required for discontinuous Galerkin.
+#
+# The operators for discontinuous Galerkin and dinite differences are
+# different and require different strengths. For FD, system is
+# unstable for epsdiss > 1/3.
+#
+# For DG, Tadmor suggests in 10.1016/S0377-0427(00)00510-0 that
+# epsdiss be set to approximately the maximum of the quantity to be
+# filtered, to the order+1 power. For the black hole, this is of order
+# 1. However experimentation is needed.
+$thorn_name::epsDiss             = $epsdiss
+
+#############################################################
+# Analysis
+#############################################################
+
+AHFinderDirect::find_every = $output_every_timesteps
+AHFinderDirect::run_at_CCTK_POST_RECOVER_VARIABLES = no
+
+AHFinderDirect::N_horizons = 1
+AHFinderDirect::initial_guess__coord_sphere__radius[1] = 2.0
+AHFinderDirect::reset_horizon_after_not_finding[1]     = no
+
+AHFinderDirect::verbose_level = "physics details"
+AHFinderDirect::output_h_every              = 1
+AHFinderDirect::output_OpenDX_control_files = false
+
+# Which interpolation operator to use to calculate the function
+# between grid points. For finite differences, use Lagrange
+# polynomials of the appropriate order. For discontinuous Galerkin,
+# use the global representation within an element provided by the
+# spectral method.
+AHFinderDirect::geometry_interpolator_name = "$geometry_interpolator_name"
+$geometry_interpolator_pars
+$surface_interpolator_name
+$surface_interpolator_pars
+
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir = "$parfile"
+
+IOBasic::outInfo_every      = $output_every_timesteps
+IOBasic::outInfo_reductions = "norm2 minimum maximum"
+IOBasic::outInfo_vars       = "
+   ML_BSSN_DG4::alpha
+   ML_BSSN_DG4::H
+"
+
+IOScalar::one_file_per_group = yes
+IOScalar::out_precision       = 17
+
+IOScalar::outScalar_every = $output_every_timesteps
+IOScalar::outScalar_vars  = "
+   ML_BSSN_DG4::ML_confac
+   ML_BSSN_DG4::ML_metric
+   ML_BSSN_DG4::ML_Gamma
+   ML_BSSN_DG4::ML_trace_curv
+   ML_BSSN_DG4::ML_curv
+   ML_BSSN_DG4::ML_lapse
+   ML_BSSN_DG4::ML_shift
+   ML_BSSN_DG4::ML_Ham
+   ML_BSSN_DG4::ML_mom
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+"
+
+IOHDF5::one_file_per_group = yes
+
+# change these settings to remove ghost points from output
+# can make analysis routines simpler.
+IOHDF5::out3D_ghosts           = yes # default = yes
+IOHDF5::out3D_outer_ghosts     = yes # default = yes
+
+IOHDF5::out3D_every = $output_every_timesteps
+IOHDF5::out3D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ML_BSSN_DG4::ML_confac
+   ML_BSSN_DG4::ML_metric
+   ML_BSSN_DG4::ML_Gamma
+   ML_BSSN_DG4::ML_trace_curv
+   ML_BSSN_DG4::ML_curv
+   ML_BSSN_DG4::ML_lapse
+   ML_BSSN_DG4::ML_shift
+   ML_BSSN_DG4::ML_Ham
+   ML_BSSN_DG4::ML_mom
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+"
+""")
+
+par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
+                                     dr=dr,
+                                     R_inner=R_inner,
+                                     R_outer=R_outer,
+                                     grid_points_per_patch_angular=grid_points_per_patch_angular,
+                                     interpolator_order=interpolator_order,
+                                     shift_edges=shift_edges,
+                                     ghost_cells=ghost_cells,
+                                     granularity=granularity,
+                                     granularity_boundary=granularity_boundary,
+                                     final_time=final_time,
+                                     dt=dt,
+                                     tile_size=tile_size,
+                                     M=M,a=a,
+                                     epsdiss=epsdiss,
+                                     output_every_timesteps=output_every_timesteps,
+                                     geometry_interpolator_name=geometry_interpolator_name,
+                                     geometry_interpolator_pars=geometry_interpolator_pars,
+                                     surface_interpolator_name=surface_interpolator_name,
+                                     surface_interpolator_pars=surface_interpolator_pars,
+                                     parfile="$parfile")
+
+with open(filename,'w') as f:
+    f.write(par_string)
