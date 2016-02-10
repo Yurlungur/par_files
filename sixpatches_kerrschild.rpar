@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-09 23:58:14 (jmiller)>
+# Time-stamp: <2016-02-10 00:03:58 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -287,6 +287,9 @@ Coordinates::sphere_outer_radius = $R_outer
 # we have (approximately) that:
 # dr = dtheta = dphi
 Coordinates::n_angular           =  $grid_points_per_patch_angular
+
+Coordinates::patch_boundary_size = $ghost_cells
+Coordinates::outer_boundary_size = $ghost_cells
 
 Coordinates::stagger_patch_boundaries = yes
 Coordinates::stagger_outer_boundaries = yes
