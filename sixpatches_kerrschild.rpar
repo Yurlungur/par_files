@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-10 00:03:58 (jmiller)>
+# Time-stamp: <2016-02-10 00:09:49 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -154,10 +154,12 @@ if formulation == "DGFE_BSSN":
     ghost_cells = 1
     granularity = order+1
     granularity_boundary = 1
+    added_overlap = 0
 else:
     ghost_cells = order/2
     granularity = 1
     granularity_boundary = 0
+    added_overlap = 1
 
 # Number of grid points per M 
 # in radial direction.
@@ -290,6 +292,7 @@ Coordinates::n_angular           =  $grid_points_per_patch_angular
 
 Coordinates::patch_boundary_size = $ghost_cells
 Coordinates::outer_boundary_size = $ghost_cells
+Coordinates::additional_overlap_size = $added_overlap
 
 Coordinates::stagger_patch_boundaries = yes
 Coordinates::stagger_outer_boundaries = yes
@@ -508,6 +511,7 @@ par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
                                      ghost_cells=ghost_cells,
                                      granularity=granularity,
                                      granularity_boundary=granularity_boundary,
+                                     added_overlap=added_overlap,
                                      final_time=final_time,
                                      dt=dt,
                                      tile_size=tile_size,
