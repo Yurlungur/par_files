@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-09 23:56:50 (jmiller)>
+# Time-stamp: <2016-02-09 23:58:14 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -432,8 +432,8 @@ IO::out_dir = "$parfile"
 IOBasic::outInfo_every      = $output_every_timesteps
 IOBasic::outInfo_reductions = "norm2 minimum maximum"
 IOBasic::outInfo_vars       = "
-   ML_BSSN_DG4::alpha
-   ML_BSSN_DG4::H
+   $thorn_name::alpha
+   $thorn_name::H
 "
 
 IOScalar::one_file_per_group = yes
