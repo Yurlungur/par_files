@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-10 00:09:49 (jmiller)>
+# Time-stamp: <2016-02-10 16:30:54 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -129,13 +129,13 @@ else:
 # width of an element in radial direction
 element_width_radial = M/rho
 
-# We want elements to be roughly cubic at the horizon. We use this
-# criteria to determine how many elements to include radially.
-# In FD this corresponds to dr and d(theta) being approximately equal
-# near the horizon.
+# We want elements to be roughly cubic at inner radius. We use this
+# criteria to determine how many elements to include radially.  In FD
+# this corresponds to dr and d(theta) being approximately equal near
+# the horizon.
 horizon_circumference = 2.*pi*R_S
 inner_circumference = 2*pi*R_inner
-elements_per_circumference = horizon_circumference*rho
+elements_per_circumference = inner_circumference*rho
 
 # To see full equatorial slice, we need 4 patches.
 # Number of elements per patch is, of course, an integer.
@@ -156,10 +156,10 @@ if formulation == "DGFE_BSSN":
     granularity_boundary = 1
     added_overlap = 0
 else:
-    ghost_cells = order/2
+    ghost_cells = order/2+1
     granularity = 1
     granularity_boundary = 0
-    added_overlap = 1
+    added_overlap = ghost_cells
 
 # Number of grid points per M 
 # in radial direction.
@@ -171,22 +171,19 @@ grid_points_per_M = stencil_width*rho
 dr = M/grid_points_per_M
 
 # Grid points per patch in the angular direction
-grid_points_per_patch_angular = stencil_width*elements_per_patch_angular
+# remove 1 grid point
+grid_points_per_patch_angular = stencil_width*elements_per_patch_angular - 1
 rdtheta_min = (pi/2.)*R_inner/grid_points_per_patch_angular
 
 # timestep size
-# Correct formula is: dt = rdtheta_min
-#         but this formula is more difficult to interpret
-#         because it involves pi. Therefore, we use
-#         this simpler, easier to round, formula.
-dt = cfl_factor*dr*0.5
+# Correct formula is: dt = C*rdtheta_min = C*dr
+dt = cfl_factor*dr
 
 # How often we output, in number of timesteps
 # note weird formula is to ensure that multiple resolutions
 # output at exactly the same number of timesteps.
 # otherwise rounding error could cause weird offsets.
-# factor of 2 exists because rdtheta = 1/2 dr at inner radius
-output_every_timesteps = 2*int(output_every_M/cfl_factor)*rho*stencil_width
+output_every_timesteps = int(output_every_M/cfl_factor)*rho*stencil_width
 
 # At patch boundaries, interpolation is performed.  For finite
 # differences, this interpolation needs to be the same order as the
@@ -198,8 +195,15 @@ if formulation == "DGFE_BSSN":
     interpolator_order = 0
     shift_edges = "yes"
 else:
-    interpolator_order = order
+    interpolator_order = order+1
     shift_edges = "no"
+
+# In DG system is cell-centered.
+# In FD, system should be vertex-centered.
+if formulation == "DGFE_BSSN":
+    stagger = "yes"
+else:
+    stagger = "no"
 
 # Tile size determines how for-loops are arranged for a stencil.
 # For finite differences this may or may not change efficiency.
@@ -214,11 +218,13 @@ else:
 # We must set the horizon finder parameters very differently, so these
 # settings are separated from the rest of the parameter file.
 if formulation == "DGFE_BSSN":
+    additional_thorn = 'ActiveThorns = "ML_LocalInterp"'
     geometry_interpolator_name = "DGFE"
     geometry_interpolator_pars = ""
     surface_interpolator_name = ""
     surface_interpolator_pars = ""
 else:
+    additional_thorn = ""
     geometry_interpolator_name = "Lagrange polynomial interpolation"
     geometry_interpolator_pars = 'AHFinderDirect::geometry_interpolator_pars = "order=%s"' % order
     surface_interpolator_name = 'AHFinderDirect::surface_interpolator_name  = "Lagrange polynomial interpolation"'
@@ -256,7 +262,6 @@ ActiveThorns = "
    Interpolate2
    KerrSchild
    $thorn_name
-   ML_LocalInterp
    MoL
    NaNChecker
    SpaceMask
@@ -279,13 +284,13 @@ CartGrid3D::set_coordinate_ranges_on = "all maps"
 # The name of the sixpatches system
 Coordinates::coordinate_system = "Thornburg04nc"
 
-# Grid points in r direction per M is (2*order+1)*rho
+# Grid points in r direction per M is (order+1)*rho
 Coordinates::h_radial            = $dr
 
 Coordinates::sphere_inner_radius = $R_inner
 Coordinates::sphere_outer_radius = $R_outer
 
-# Chosen so that, near event horizon,
+# Chosen so that, near inner radius,
 # we have (approximately) that:
 # dr = dtheta = dphi
 Coordinates::n_angular           =  $grid_points_per_patch_angular
@@ -294,8 +299,8 @@ Coordinates::patch_boundary_size = $ghost_cells
 Coordinates::outer_boundary_size = $ghost_cells
 Coordinates::additional_overlap_size = $added_overlap
 
-Coordinates::stagger_patch_boundaries = yes
-Coordinates::stagger_outer_boundaries = yes
+Coordinates::stagger_patch_boundaries = $stagger
+Coordinates::stagger_outer_boundaries = $stagger
 
 # For FD, should be same order as stencil
 # For DG, copy nearest point
@@ -408,6 +413,12 @@ $thorn_name::epsDiss             = $epsdiss
 # Analysis
 #############################################################
 
+# For discontinuous Galerkin methods, we add an additional thorn,
+# ML_LocalInterp, which uses the modal basis within each DG
+# element. This provides the interpolation routines. Otherwise, we use
+# Lagrange polynomials of the appropriate order.
+$additional_thorn
+
 AHFinderDirect::find_every = $output_every_timesteps
 AHFinderDirect::run_at_CCTK_POST_RECOVER_VARIABLES = no
 
@@ -416,6 +427,8 @@ AHFinderDirect::initial_guess__coord_sphere__radius[1] = 2.0
 AHFinderDirect::reset_horizon_after_not_finding[1]     = no
 
 AHFinderDirect::verbose_level = "physics details"
+#AHFinderDirect::verbose_level = "algorithm highlights"
+
 AHFinderDirect::output_h_every              = 1
 AHFinderDirect::output_OpenDX_control_files = false
 
@@ -446,14 +459,9 @@ IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
 IOScalar::outScalar_every = $output_every_timesteps
+CarpetIOScalar::outScalar_reductions = "minimum maximum norm2"
 IOScalar::outScalar_vars  = "
    $thorn_name::ML_confac
-   $thorn_name::ML_metric
-   $thorn_name::ML_Gamma
-   $thorn_name::ML_trace_curv
-   $thorn_name::ML_curv
-   $thorn_name::ML_lapse
-   $thorn_name::ML_shift
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
    ADMBase::metric
@@ -477,13 +485,6 @@ IOHDF5::out3D_vars  = "
    CarpetReduce::weight
    Coordinates::jacobian
    Interpolate::source_patch
-   $thorn_name::ML_confac
-   $thorn_name::ML_metric
-   $thorn_name::ML_Gamma
-   $thorn_name::ML_trace_curv
-   $thorn_name::ML_curv
-   $thorn_name::ML_lapse
-   $thorn_name::ML_shift
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
    ADMBase::metric
@@ -508,6 +509,7 @@ par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
                                      grid_points_per_patch_angular=grid_points_per_patch_angular,
                                      interpolator_order=interpolator_order,
                                      shift_edges=shift_edges,
+                                     stagger=stagger,
                                      ghost_cells=ghost_cells,
                                      granularity=granularity,
                                      granularity_boundary=granularity_boundary,
@@ -517,6 +519,7 @@ par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
                                      tile_size=tile_size,
                                      M=M,a=a,
                                      epsdiss=epsdiss,
+                                     additional_thorn=additional_thorn,
                                      output_every_timesteps=output_every_timesteps,
                                      geometry_interpolator_name=geometry_interpolator_name,
                                      geometry_interpolator_pars=geometry_interpolator_pars,
