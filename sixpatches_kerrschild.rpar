@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-10 16:30:54 (jmiller)>
+# Time-stamp: <2016-02-17 16:34:05 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -56,7 +56,17 @@ try:
 except:
     order = default_order
 
+# Debugging
+default_debugging = False
+try:
+    debugging = bool(eval("@DEBUGGING@"))
+except:
+    debugging = default_debugging
+
 # Final time
+# Note that if debugging is active
+# this parameter doesn't do anything
+# code only runs for 3 timesteps
 default_final_time = 1
 try:
     final_time = float(eval("@FINAL@"))
@@ -179,11 +189,20 @@ rdtheta_min = (pi/2.)*R_inner/grid_points_per_patch_angular
 # Correct formula is: dt = C*rdtheta_min = C*dr
 dt = cfl_factor*dr
 
+# If debugging is active, we only iterate for 3 timesteps
+final_time = 3*dt
+
 # How often we output, in number of timesteps
 # note weird formula is to ensure that multiple resolutions
 # output at exactly the same number of timesteps.
 # otherwise rounding error could cause weird offsets.
-output_every_timesteps = int(output_every_M/cfl_factor)*rho*stencil_width
+# In debugging mode, we output 2D data as well.
+if debugging:
+    output_every_timesteps = 1
+    output_1D_every_timesteps = 1
+else:
+    output_every_timesteps = int(output_every_M/cfl_factor)*rho*stencil_width
+    output_1D_every_timesteps = 0
 
 # At patch boundaries, interpolation is performed.  For finite
 # differences, this interpolation needs to be the same order as the
@@ -462,6 +481,7 @@ IOScalar::outScalar_every = $output_every_timesteps
 CarpetIOScalar::outScalar_reductions = "minimum maximum norm2"
 IOScalar::outScalar_vars  = "
    $thorn_name::ML_confac
+   $thorn_name::ML_trace_curv
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
    ADMBase::metric
@@ -487,6 +507,11 @@ IOHDF5::out3D_vars  = "
    Interpolate::source_patch
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
+   $thorn_name::ML_confac
+   $thorn_name::ML_confacrhs
+   $thorn_name::ML_lapserhs
+   $thorn_name::ML_trace_curv
+   $thorn_name::ML_trace_curvrhs
    ADMBase::metric
    ADMBase::curv
    ADMBase::lapse
@@ -499,6 +524,49 @@ IOHDF5::out3D_vars  = "
    KerrSchild::shift_exact
    KerrSchild::dtlapse_exact
    KerrSchild::dtshift_exact
+"
+
+IOHDF5::out1D_every = $output_1D_every_timesteps
+IOHDF5::out1D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   Coordinates::jacobian
+   Interpolate::source_patch
+   ADMBase::metric
+   ADMBase::curv
+   ADMBase::lapse
+   ADMBase::shift
+   ADMBase::dtlapse
+   ADMBase::dtshift
+   KerrSchild::metric_exact
+   KerrSchild::curv_exact
+   KerrSchild::lapse_exact
+   KerrSchild::shift_exact
+   KerrSchild::dtlapse_exact
+   KerrSchild::dtshift_exact
+   $thorn_name::ML_confac
+   $thorn_name::ML_metric
+   $thorn_name::ML_Gamma
+   $thorn_name::ML_trace_curv
+   $thorn_name::ML_curv
+   $thorn_name::ML_lapse
+   $thorn_name::ML_shift
+   $thorn_name::ML_dtlapse
+   $thorn_name::ML_dtshift
+   $thorn_name::ML_confacrhs
+   $thorn_name::ML_metricrhs
+   $thorn_name::ML_Gammarhs
+   $thorn_name::ML_trace_curvrhs
+   $thorn_name::ML_curvrhs
+   $thorn_name::ML_lapserhs
+   $thorn_name::ML_shiftrhs
+   $thorn_name::ML_dtlapserhs
+   $thorn_name::ML_dtshiftrhs
+   $thorn_name::ML_Ham
+   $thorn_name::ML_mom
+   $thorn_name::ML_cons_detg
+   $thorn_name::ML_cons_Gamma
+   $thorn_name::ML_cons_traceA
 "
 """)
 
@@ -521,6 +589,7 @@ par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
                                      epsdiss=epsdiss,
                                      additional_thorn=additional_thorn,
                                      output_every_timesteps=output_every_timesteps,
+                                     output_1D_every_timesteps=output_1D_every_timesteps,
                                      geometry_interpolator_name=geometry_interpolator_name,
                                      geometry_interpolator_pars=geometry_interpolator_pars,
                                      surface_interpolator_name=surface_interpolator_name,
