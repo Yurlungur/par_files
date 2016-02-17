@@ -4,7 +4,11 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-17 16:34:05 (jmiller)>
+<<<<<<< HEAD
+# Time-stamp: <2016-02-17 18:17:38 (jmiller)>
+=======
+# Time-stamp: <2016-02-16 23:18:54 (jmiller)>
+>>>>>>> f7267acf6eadde90baef34b388d78cb65b3df18d
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -190,7 +194,8 @@ rdtheta_min = (pi/2.)*R_inner/grid_points_per_patch_angular
 dt = cfl_factor*dr
 
 # If debugging is active, we only iterate for 3 timesteps
-final_time = 3*dt
+if debugging:
+    final_time = 3*dt
 
 # How often we output, in number of timesteps
 # note weird formula is to ensure that multiple resolutions
@@ -484,6 +489,26 @@ IOScalar::outScalar_vars  = "
    $thorn_name::ML_trace_curv
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
+   $thorn_name::ML_metric
+   $thorn_name::ML_Gamma
+   $thorn_name::ML_trace_curv
+   $thorn_name::ML_curv
+   $thorn_name::ML_lapse
+   $thorn_name::ML_shift
+   $thorn_name::ML_dtlapse
+   $thorn_name::ML_dtshift
+   $thorn_name::ML_confacrhs
+   $thorn_name::ML_metricrhs
+   $thorn_name::ML_Gammarhs
+   $thorn_name::ML_trace_curvrhs
+   $thorn_name::ML_curvrhs
+   $thorn_name::ML_lapserhs
+   $thorn_name::ML_shiftrhs
+   $thorn_name::ML_dtlapserhs
+   $thorn_name::ML_dtshiftrhs
+   $thorn_name::ML_cons_detg
+   $thorn_name::ML_cons_Gamma
+   $thorn_name::ML_cons_traceA
    ADMBase::metric
    ADMBase::curv
    ADMBase::lapse
@@ -507,11 +532,34 @@ IOHDF5::out3D_vars  = "
    Interpolate::source_patch
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
+<<<<<<< HEAD
    $thorn_name::ML_confac
    $thorn_name::ML_confacrhs
    $thorn_name::ML_lapserhs
    $thorn_name::ML_trace_curv
    $thorn_name::ML_trace_curvrhs
+=======
+   $thorn_name::ML_metric
+   $thorn_name::ML_Gamma
+   $thorn_name::ML_trace_curv
+   $thorn_name::ML_curv
+   $thorn_name::ML_lapse
+   $thorn_name::ML_shift
+   $thorn_name::ML_dtlapse
+   $thorn_name::ML_dtshift
+   $thorn_name::ML_confacrhs
+   $thorn_name::ML_metricrhs
+   $thorn_name::ML_Gammarhs
+   $thorn_name::ML_trace_curvrhs
+   $thorn_name::ML_curvrhs
+   $thorn_name::ML_lapserhs
+   $thorn_name::ML_shiftrhs
+   $thorn_name::ML_dtlapserhs
+   $thorn_name::ML_dtshiftrhs
+   $thorn_name::ML_cons_detg
+   $thorn_name::ML_cons_Gamma
+   $thorn_name::ML_cons_traceA
+>>>>>>> f7267acf6eadde90baef34b388d78cb65b3df18d
    ADMBase::metric
    ADMBase::curv
    ADMBase::lapse
