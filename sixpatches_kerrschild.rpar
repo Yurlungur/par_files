@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-10 16:30:54 (jmiller)>
+# Time-stamp: <2016-02-16 23:18:54 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -464,6 +464,26 @@ IOScalar::outScalar_vars  = "
    $thorn_name::ML_confac
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
+   $thorn_name::ML_metric
+   $thorn_name::ML_Gamma
+   $thorn_name::ML_trace_curv
+   $thorn_name::ML_curv
+   $thorn_name::ML_lapse
+   $thorn_name::ML_shift
+   $thorn_name::ML_dtlapse
+   $thorn_name::ML_dtshift
+   $thorn_name::ML_confacrhs
+   $thorn_name::ML_metricrhs
+   $thorn_name::ML_Gammarhs
+   $thorn_name::ML_trace_curvrhs
+   $thorn_name::ML_curvrhs
+   $thorn_name::ML_lapserhs
+   $thorn_name::ML_shiftrhs
+   $thorn_name::ML_dtlapserhs
+   $thorn_name::ML_dtshiftrhs
+   $thorn_name::ML_cons_detg
+   $thorn_name::ML_cons_Gamma
+   $thorn_name::ML_cons_traceA
    ADMBase::metric
    ADMBase::curv
    ADMBase::lapse
@@ -487,6 +507,26 @@ IOHDF5::out3D_vars  = "
    Interpolate::source_patch
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
+   $thorn_name::ML_metric
+   $thorn_name::ML_Gamma
+   $thorn_name::ML_trace_curv
+   $thorn_name::ML_curv
+   $thorn_name::ML_lapse
+   $thorn_name::ML_shift
+   $thorn_name::ML_dtlapse
+   $thorn_name::ML_dtshift
+   $thorn_name::ML_confacrhs
+   $thorn_name::ML_metricrhs
+   $thorn_name::ML_Gammarhs
+   $thorn_name::ML_trace_curvrhs
+   $thorn_name::ML_curvrhs
+   $thorn_name::ML_lapserhs
+   $thorn_name::ML_shiftrhs
+   $thorn_name::ML_dtlapserhs
+   $thorn_name::ML_dtshiftrhs
+   $thorn_name::ML_cons_detg
+   $thorn_name::ML_cons_Gamma
+   $thorn_name::ML_cons_traceA
    ADMBase::metric
    ADMBase::curv
    ADMBase::lapse
