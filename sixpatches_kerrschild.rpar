@@ -5,7 +5,7 @@
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
 <<<<<<< HEAD
-# Time-stamp: <2016-02-17 18:17:38 (jmiller)>
+# Time-stamp: <2016-02-17 23:41:49 (jmiller)>
 =======
 # Time-stamp: <2016-02-16 23:18:54 (jmiller)>
 >>>>>>> f7267acf6eadde90baef34b388d78cb65b3df18d
@@ -417,6 +417,9 @@ $thorn_name::advectLapse         = 0
 $thorn_name::advectShift         = 0
 $thorn_name::minimumLapse        = 1E-12  # no dividing by zero!
 $thorn_name::conformalMethod     = 1      # W
+
+# turns on advection for traceK
+$thorn_name::fixAdvectionTerms   = 1
 
 # Dissipation:
 #
