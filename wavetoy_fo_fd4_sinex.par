@@ -28,27 +28,27 @@ ActiveThorns = "
 CartGrid3D::type               = "multipatch"
 Coordinates::coordinate_system = "Cartesian"
 
-Coordinates::patch_xmin = -0.5 - 0.5/(5*@RHO@)
-Coordinates::patch_ymin = -0.5 - 0.5/(5*@RHO@)
-Coordinates::patch_zmin = -0.5 - 0.5/(5*@RHO@)
-Coordinates::patch_xmax = 0.5 - 0.5/(5*@RHO@)
-Coordinates::patch_ymax = 0.5 - 0.5/(5*@RHO@)
-Coordinates::patch_zmax = 0.5 - 0.5/(5*@RHO@)
+Coordinates::patch_xmin = 0.0
+Coordinates::patch_ymin = 0.0
+Coordinates::patch_zmin = 0.0
+Coordinates::patch_xmax = 1.0
+Coordinates::patch_ymax = 1.0
+Coordinates::patch_zmax = 1.0
 
-Coordinates::ncells_x = 5*@RHO@   # (order+1)*n
+Coordinates::ncells_x = 5*2*@RHO@   # (order+1)*n
 Coordinates::ncells_y = 5*1 #*@RHO@
 Coordinates::ncells_z = 5*1 #*@RHO@
 
-Coordinates::patch_boundary_size = 2
-Coordinates::outer_boundary_size = 2
+Coordinates::patch_boundary_size = 3
+Coordinates::outer_boundary_size = 3
 
-Coordinates::stagger_patch_boundaries = yes
-Coordinates::stagger_outer_boundaries = yes
+Coordinates::stagger_patch_boundaries = no
+Coordinates::stagger_outer_boundaries = no
 
 Coordinates::register_symmetry = no
 Periodic::periodic             = yes
 
-Coordinates::store_jacobian            = no
+Coordinates::store_jacobian            = yes
 Coordinates::store_inverse_jacobian    = no
 Coordinates::store_jacobian_derivative = no
 Coordinates::store_volume_form         = no
@@ -58,14 +58,14 @@ Coordinates::store_volume_form         = no
 #############################################################
 
 Carpet::domain_from_multipatch = yes
-Carpet::ghost_size             = 2
+Carpet::ghost_size             = 3
 
 #############################################################
 # Time integration
 #############################################################
 
 Cactus::terminate       = "time"
-Cactus::cctk_final_time = 10.0
+Cactus::cctk_final_time = 1.0
 
 Time::timestep_method = "given"
 Time::timestep        = 0.1/@RHO@
@@ -122,6 +122,7 @@ IOASCII::out1D_every = 1*@RHO@
 IOASCII::out1D_vars  = "
    grid::coordinates
    CarpetReduce::weight
+   ML_WaveToy_FD4::WT_detJ
    ML_WaveToy_FD4::WT_u
    ML_WaveToy_FD4::WT_rho
    ML_WaveToy_FD4::WT_v

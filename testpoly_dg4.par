@@ -2,6 +2,7 @@ ActiveThorns = "
    Boundary
    Carpet
    CarpetIOASCII
+   CarpetIOHDF5
    CarpetIOBasic
    CarpetIOScalar
    CarpetInterp
@@ -36,7 +37,7 @@ Coordinates::patch_xmax = +0.5
 Coordinates::patch_ymax = +0.5
 Coordinates::patch_zmax = +0.5
 
-Coordinates::ncells_x = 5   # (order+1)*n
+Coordinates::ncells_x = 5*2*@RHO@   # (order+1)*n
 Coordinates::ncells_y = 5
 Coordinates::ncells_z = 5
 
@@ -46,10 +47,10 @@ Coordinates::stagger_outer_boundaries = yes
 Coordinates::register_symmetry = no
 Periodic::periodic             = yes
 
-Coordinates::store_jacobian            = no
+Coordinates::store_jacobian            = yes
 Coordinates::store_inverse_jacobian    = no
 Coordinates::store_jacobian_derivative = no
-Coordinates::store_volume_form         = no
+Coordinates::store_volume_form         = yes
 
 #############################################################
 # Carpet
@@ -73,15 +74,16 @@ Cactus::cctk_itlast = 0
 ML_Test_DG4::tile_size = 5   # order+1
 
 ML_Test_DG4::alphaDeriv = 0.5
+ML_Test_DG4::epsDiss = 1
 
 #############################################################
 # InterpToArray
 #############################################################
 
 InterpToArray::interpolator_name    = "DGFE"
-InterpToArray::interpolator_options = "operation_codes={1 1 1 1 1 1 1}"
+InterpToArray::interpolator_options = "operation_codes={1 1 1 1 1 1 1 1 1}"
 
-InterpToArray::narrays3d       = 7
+InterpToArray::narrays3d       = 9
 InterpToArray::array3d_vars[0] = "ML_Test_DG4::p0"
 InterpToArray::array3d_vars[1] = "ML_Test_DG4::p1"
 InterpToArray::array3d_vars[2] = "ML_Test_DG4::p2"
@@ -89,14 +91,16 @@ InterpToArray::array3d_vars[3] = "ML_Test_DG4::p3"
 InterpToArray::array3d_vars[4] = "ML_Test_DG4::p4"
 InterpToArray::array3d_vars[5] = "ML_Test_DG4::p5"
 InterpToArray::array3d_vars[6] = "ML_Test_DG4::p6"
+InterpToArray::array3d_vars[7] = "ML_Test_DG4::p7"
+InterpToArray::array3d_vars[8] = "ML_Test_DG4::p8"
 
-InterpToArray::array3d_x0        = -0.5 + 0.5/5
-InterpToArray::array3d_y0        = -0.5 + 0.5/5
-InterpToArray::array3d_z0        = -0.5 + 0.5/5
-InterpToArray::array3d_dx_i      =  0.2
+InterpToArray::array3d_x0        = -0.5
+InterpToArray::array3d_y0        = -0.5
+InterpToArray::array3d_z0        = -0.5
+InterpToArray::array3d_dx_i      =  1/(5*2*@RHO@)
 InterpToArray::array3d_dy_j      =  0.2
 InterpToArray::array3d_dz_k      =  0.2
-InterpToArray::array3d_npoints_i =  5
+InterpToArray::array3d_npoints_i =  5*2*@RHO@
 InterpToArray::array3d_npoints_j =  5
 InterpToArray::array3d_npoints_k =  5
 
@@ -116,7 +120,7 @@ IOBasic::outInfo_vars       = "
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = 1
+IOScalar::outScalar_every = 0
 IOScalar::outScalar_vars  = "
    ML_Test_DG4::WT_weightgf
    ML_Test_DG4::WT_p0
@@ -126,6 +130,7 @@ IOScalar::outScalar_vars  = "
    ML_Test_DG4::WT_p4
    ML_Test_DG4::WT_p5
    ML_Test_DG4::WT_p6
+   ML_Test_DG4::WT_p7
    ML_Test_DG4::WT_dp0
    ML_Test_DG4::WT_dp1
    ML_Test_DG4::WT_dp2
@@ -140,14 +145,19 @@ IOScalar::outScalar_vars  = "
    ML_Test_DG4::WT_ddp4
    ML_Test_DG4::WT_ddp5
    ML_Test_DG4::WT_ddp6
+   ML_Test_DG4::WT_dissp5
+   ML_Test_DG4::WT_dissp7
    InterpToArray::arrays3d
 "
 
 IOASCII::one_file_per_group = yes
 IOASCII::out_precision      = 17
 
-IOASCII::out1D_every = 1
-IOASCII::out1D_vars  = "
+IOASCII::out1D_every = 0
+
+IOHDF5::one_file_per_group = yes
+IOHDF5::out1D_every = 1
+IOHDF5::out1D_vars  = "
    grid::coordinates
    CarpetReduce::weight
    ML_Test_DG4::WT_weightgf
@@ -158,6 +168,7 @@ IOASCII::out1D_vars  = "
    ML_Test_DG4::WT_p4
    ML_Test_DG4::WT_p5
    ML_Test_DG4::WT_p6
+   ML_Test_DG4::WT_p7
    ML_Test_DG4::WT_dp0
    ML_Test_DG4::WT_dp1
    ML_Test_DG4::WT_dp2
@@ -172,10 +183,12 @@ IOASCII::out1D_vars  = "
    ML_Test_DG4::WT_ddp4
    ML_Test_DG4::WT_ddp5
    ML_Test_DG4::WT_ddp6
+   ML_Test_DG4::WT_dissp5
+   ML_Test_DG4::WT_dissp7
    InterpToArray::arrays3d
 "
 
-IOASCII::out3D_every = 1
+IOASCII::out3D_every = 0
 IOASCII::out3D_vars  = "
    InterpToArray::arrays3d
 "
