@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-18 11:25:56 (jmiller)>
+# Time-stamp: <2016-02-26 13:31:10 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -530,6 +530,7 @@ IOHDF5::out3D_vars  = "
    CarpetReduce::weight
    Coordinates::jacobian
    Interpolate::source_patch
+   $thorn_name::ML_volume_form
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
    $thorn_name::ML_confac
