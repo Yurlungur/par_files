@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-02-26 13:31:10 (jmiller)>
+# Time-stamp: <2016-03-01 14:16:23 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -38,8 +38,23 @@ R_S = 2.*M
 # Radius of excision. 
 R_inner = 1.*M
 
-# Outer radius. For production runs, this should be ~100*M.
-default_R_outer = 101*M if production_run else 5*M
+# Debugging
+default_debugging = False
+try:
+    debugging = bool(eval("@DEBUGGING@"))
+except:
+    debugging = default_debugging
+
+# Outer radius.
+# If we're debugging, this can be ~5M.
+# For production runs, this should be ~100*M.
+# For small test runs, it should be ~10M.
+if debugging:
+    default_R_outer = 5.*M
+elif production_run:
+    default_R_outer = 101.*M
+else: # small test runs
+    default_R_outer = 10.*M
 try:
     R_outer = float(eval("@OUTER@"))
 except:
@@ -55,13 +70,6 @@ try:
     order = int(eval("@ORDER@"))
 except:
     order = default_order
-
-# Debugging
-default_debugging = False
-try:
-    debugging = bool(eval("@DEBUGGING@"))
-except:
-    debugging = default_debugging
 
 # Final time
 # Note that if debugging is active
@@ -197,12 +205,15 @@ if debugging:
 # note weird formula is to ensure that multiple resolutions
 # output at exactly the same number of timesteps.
 # otherwise rounding error could cause weird offsets.
-# In debugging mode, we output 2D data as well.
+# In debugging mode, we output data every timestep
+# In debugging mode, we don't do any horizon finding
 if debugging:
+    find_every_timesteps = 0
     output_every_timesteps = 1
-    output_1D_every_timesteps = 1
+    output_1D_every_timesteps = 0
 else:
     output_every_timesteps = int(output_every_M/cfl_factor)*rho*stencil_width
+    find_every_timesteps = output_every_timesteps
     output_1D_every_timesteps = 0
 
 # At patch boundaries, interpolation is performed.  For finite
@@ -443,7 +454,7 @@ $thorn_name::epsDiss             = $epsdiss
 # Lagrange polynomials of the appropriate order.
 $additional_thorn
 
-AHFinderDirect::find_every = $output_every_timesteps
+AHFinderDirect::find_every = $find_every_timesteps
 AHFinderDirect::run_at_CCTK_POST_RECOVER_VARIABLES = no
 
 AHFinderDirect::N_horizons = 1
@@ -610,7 +621,7 @@ IOHDF5::out1D_vars  = "
    $thorn_name::ML_dtshiftrhs
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
-   $thorn_name::ML_cons_detg
+p   $thorn_name::ML_cons_detg
    $thorn_name::ML_cons_Gamma
    $thorn_name::ML_cons_traceA
 "
@@ -635,6 +646,7 @@ par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
                                      epsdiss=epsdiss,
                                      additional_thorn=additional_thorn,
                                      output_every_timesteps=output_every_timesteps,
+                                     find_every_timesteps=find_every_timestpes,
                                      output_1D_every_timesteps=output_1D_every_timesteps,
                                      geometry_interpolator_name=geometry_interpolator_name,
                                      geometry_interpolator_pars=geometry_interpolator_pars,
