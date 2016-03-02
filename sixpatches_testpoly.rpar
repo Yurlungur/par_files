@@ -1,0 +1,419 @@
+#!/usr/bin/env python2
+
+# sixpatches_testpoly.rpar
+
+# Parameter file for testing the 
+# using sixpatches system. Can use DG or FD stencils.
+# Time-stamp: <2016-03-02 17:30:33 (jmiller)>
+# Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
+
+# These are generically what you want for a parameter file
+# ----------------------------------------------------------------------
+from math import *
+import sys
+import re
+from string import Template
+# ----------------------------------------------------------------------
+
+
+######################################################################
+# User-defined parameters
+######################################################################
+
+# Whether checkpointing is on or off
+checkpointing = False
+# Whether or not to use dissipation
+# for discontinuous Galerkin.
+# It is always used for finite differences.
+using_dissipation=False
+production_run=False
+
+# Radius of excision. 
+R_inner = 1.
+
+# Outer radius.
+if production_run:
+    default_R_outer = 10.
+else: # small test runs
+    default_R_outer = 5.
+try:
+    R_outer = float(eval("@OUTER@"))
+except:
+    R_outer = default_R_outer
+
+# derivative order
+# Note that for finite differences,
+# we forbid odd orders.
+# For discontinuous Galerkin, odd orders
+# are fine.
+default_order = 4
+try:
+    order = int(eval("@ORDER@"))
+except:
+    order = default_order
+
+# Number of grid points/elements per 1 in the radial direction
+# For DG rho is elements/M
+# For DG and FD,
+# (order+1)*rho is (number of grid points)/1
+default_rho = 5
+try:
+    rho = int(eval("@RHO@")) 
+except:
+    rho = default_rho
+
+# Do we use finite differences or discontinuous Galerkin
+# stencils?
+# Choices are DGFE_BSSN and FD_BSSN
+formulation = "@FORMULATION@"
+allowed_formulations = ["DGFE_BSSN","FD_BSSN"]
+assert formulation in allowed_formulations
+
+# This is the strength of the dissipation operator if it is active.
+# This is required for Finite Differences.  It may or may not be
+# required for discontinuous Galerkin.
+#
+# The operators for discontinuous Galerkin and dinite differences are
+# different and require different strengths. For FD, system is
+# unstable for epsdiss > 1/3.
+#
+# For DG, Tadmor suggests in 10.1016/S0377-0427(00)00510-0 that
+# epsdiss be set to approximately the maximum of the quantity to be
+# filtered, to the order+1 power. For the black hole, this is of order
+# 1. However experimentation is needed.
+fd_dissipation_strength = 0.2
+dg_dissipation_strength = 1**(order+1)
+if formulation == "FD_BSSN":
+    epsdiss = fd_dissipation_strength
+elif formulation == "DG_BSSN" and using_dissipation:
+    epsdiss = dg_dissipation_strength
+else:
+    epsdiss = 0
+
+# How often we output
+output_every_timesteps = 1
+
+######################################################################
+# Calculations
+######################################################################
+
+# File name
+filename = re.sub(r'(.*)\.rpar', r'\1.par', sys.argv[0])
+
+# Formulation NAMES
+DG_BSSN_NAME= "ML_Test_DG%s" % order
+FD_BSSN_NAME= "ML_Test_FD%s" % order
+if formulation == "DGFE_BSSN":
+    thorn_name = DG_BSSN_NAME
+else:
+    thorn_name = FD_BSSN_NAME
+
+# width of an element in radial direction
+element_width_radial = 1/rho
+
+# We want elements to be roughly cubic at inner radius. We use this
+# criteria to determine how many elements to include radially.  In FD
+# this corresponds to dr and d(theta) being approximately equal near
+# the horizon.
+inner_circumference = 2*pi*R_inner
+elements_per_circumference = inner_circumference*rho
+
+# To see full equatorial slice, we need 4 patches.
+# Number of elements per patch is, of course, an integer.
+# We use the ceiling to avoid under-resolving.
+elements_per_patch_angular = int(ceil(elements_per_circumference/4))
+
+# Ghost cells and stencil width depend on order and stencil type
+stencil_width = order+1
+if formulation == "DGFE_BSSN":
+    ghost_cells = 1
+    granularity = order+1
+    granularity_boundary = 1
+    added_overlap = 0
+else:
+    ghost_cells = order/2+1
+    granularity = 1
+    granularity_boundary = 0
+    added_overlap = ghost_cells
+
+# Number of grid points per 1
+# in radial direction.
+grid_points_per_1 = stencil_width*rho
+
+# Average between grid points
+# in radial direction.
+# In FD this is exact, but in DG it is average over an element
+dr = 1.0/grid_points_per_1
+
+# Grid points per patch in the angular direction
+# remove 1 grid point
+grid_points_per_patch_angular = stencil_width*elements_per_patch_angular - 1
+rdtheta_min = (pi/2.)*R_inner/grid_points_per_patch_angular
+
+# At patch boundaries, interpolation is performed.  For finite
+# differences, this interpolation needs to be the same order as the
+# stencil. But for discontinuous Galerkin methods, this no
+# interpolation is perfomed. Instead, we just copy from the nearest
+# point. This is because, for a Galerkin method, a patch boundary
+# is just an element boundary.
+if formulation == "DGFE_BSSN":
+    interpolator_order = 0
+    shift_edges = "yes"
+else:
+    interpolator_order = order+1
+    shift_edges = "no"
+
+# In DG system is cell-centered.
+# In FD, system should be vertex-centered.
+if formulation == "DGFE_BSSN":
+    stagger = "yes"
+else:
+    stagger = "no"
+
+# Tile size determines how for-loops are arranged for a stencil.
+# For finite differences this may or may not change efficiency.
+# For discontinuous Galerkin methods, the tile size MUST
+# be the same as the stencil size, order+1.
+# A value of -1 means Kranc chooses its own tile size.
+if formulation == "DGFE_BSSN":
+    tile_size = stencil_width
+else:
+    tile_size = -1
+
+# --------------------------------------------------------------------
+
+PARAM_STRING=Template("""# sixpatches_testpoly.par
+# autogenerated from sixpatches_testpoly.rpar
+# Authors: Jonah Miller and Erik Schnetter
+
+ActiveThorns = "
+   AEILocalInterp
+   Boundary
+   Carpet
+   CarpetIOASCII
+   CarpetIOHDF5
+   CarpetIOBasic
+   CarpetIOScalar
+   CarpetInterp
+   CarpetInterp2
+   CarpetLib
+   CarpetReduce
+   CartGrid3D
+   CoordBase
+   Coordinates
+   Formaline
+   GenericFD
+   IOUtil
+   Interpolate2
+   $thorn_name
+   NaNChecker
+   NewRad
+   SpaceMask
+   SphericalSurface
+   SymBase
+"
+
+#############################################################
+# Grid
+#############################################################
+
+# Required for multipatch
+CartGrid3D::type               = "multipatch"
+CartGrid3D::set_coordinate_ranges_on = "all maps"
+
+# The name of the sixpatches system
+Coordinates::coordinate_system = "Thornburg04nc"
+
+# Grid points in r direction per M is (order+1)*rho
+Coordinates::h_radial            = $dr
+
+Coordinates::sphere_inner_radius = $R_inner
+Coordinates::sphere_outer_radius = $R_outer
+
+# Chosen so that, near inner radius,
+# we have (approximately) that:
+# dr = dtheta = dphi
+Coordinates::n_angular           =  $grid_points_per_patch_angular
+
+Coordinates::patch_boundary_size = $ghost_cells
+Coordinates::outer_boundary_size = $ghost_cells
+Coordinates::additional_overlap_size = $added_overlap
+
+Coordinates::stagger_patch_boundaries = $stagger
+Coordinates::stagger_outer_boundaries = $stagger
+
+# For FD, should be same order as stencil
+# For DG, copy nearest point
+Interpolate2::interpolator_order = $interpolator_order
+
+# For FD, no. For DG, yes.
+# Artificially shifts patch edges by 1 grid point
+# so that cells exactly overlap.
+Interpolate2::shift_edges        = $shift_edges
+
+Coordinates::store_jacobian            = yes
+Coordinates::store_inverse_jacobian    = no
+Coordinates::store_jacobian_derivative = no
+Coordinates::store_volume_form         = no
+
+GenericFD::jacobian_group            = "Coordinates::jacobian"
+GenericFD::jacobian_derivative_group = "Coordinates::jacobian2"
+
+#############################################################
+# Carpet
+#############################################################
+
+Carpet::domain_from_multipatch = yes
+Carpet::ghost_size             = $ghost_cells
+Carpet::granularity            = $granularity
+Carpet::granularity_boundary   = $granularity_boundary
+
+Carpet::poison_new_timelevels = no   # does not work with persistent RHS
+
+#############################################################
+# Time integration
+#############################################################
+
+Cactus::cctk_itlast = 0
+
+#############################################################
+# Output
+#############################################################
+
+IO::out_dir = "$parfile"
+
+IOBasic::outInfo_every      = $output_every_timesteps
+IOBasic::outInfo_reductions = "sum norm2 minimum maximum"
+IOBasic::outInfo_vars       = "
+   $thorn_name::weightgf1
+   $thorn_name::p1
+"
+
+IOScalar::one_file_per_group = yes
+IOScalar::out_precision       = 17
+
+IOScalar::outScalar_every = 0
+IOScalar::outScalar_vars  = "
+   $thorn_name::WT_weightgf
+   $thorn_name::WT_p0
+   $thorn_name::WT_p1
+   $thorn_name::WT_p2
+   $thorn_name::WT_p3
+   $thorn_name::WT_p4
+   $thorn_name::WT_p5
+   $thorn_name::WT_p6
+   $thorn_name::WT_p7
+   $thorn_name::WT_dp0
+   $thorn_name::WT_dp1
+   $thorn_name::WT_dp2
+   $thorn_name::WT_dp3
+   $thorn_name::WT_dp4
+   $thorn_name::WT_dp5
+   $thorn_name::WT_dp6
+   $thorn_name::WT_ddp0
+   $thorn_name::WT_ddp1
+   $thorn_name::WT_ddp2
+   $thorn_name::WT_ddp3
+   $thorn_name::WT_ddp4
+   $thorn_name::WT_ddp5
+   $thorn_name::WT_ddp6
+   $thorn_name::WT_dissp5
+   $thorn_name::WT_dissp7
+"
+
+IOHDF5::one_file_per_group = yes
+
+IOASCII::one_file_per_group = yes
+IOASCII::out_precision      = 17
+
+IOASCII::out1D_every = 0
+IOASCII::out3D_every = 0
+
+IOHDF5::out1D_every = $output_every_timesteps
+IOHDF5::out1D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   $thorn_name::WT_weightgf
+   $thorn_name::WT_p0
+   $thorn_name::WT_p1
+   $thorn_name::WT_p2
+   $thorn_name::WT_p3
+   $thorn_name::WT_p4
+   $thorn_name::WT_p5
+   $thorn_name::WT_p6
+   $thorn_name::WT_p7
+   $thorn_name::WT_dp0
+   $thorn_name::WT_dp1
+   $thorn_name::WT_dp2
+   $thorn_name::WT_dp3
+   $thorn_name::WT_dp4
+   $thorn_name::WT_dp5
+   $thorn_name::WT_dp6
+   $thorn_name::WT_ddp0
+   $thorn_name::WT_ddp1
+   $thorn_name::WT_ddp2
+   $thorn_name::WT_ddp3
+   $thorn_name::WT_ddp4
+   $thorn_name::WT_ddp5
+   $thorn_name::WT_ddp6
+   $thorn_name::WT_dissp5
+   $thorn_name::WT_dissp7
+"
+
+# change these settings to remove ghost points from output
+# can make analysis routines simpler.
+IOHDF5::out3D_ghosts           = yes # default = yes
+IOHDF5::out3D_outer_ghosts     = yes # default = yes
+
+IOHDF5::out3D_every = $output_every_timesteps
+IOHDF5::out3D_vars  = "
+   grid::coordinates
+   CarpetReduce::weight
+   $thorn_name::WT_weightgf
+   $thorn_name::WT_p0
+   $thorn_name::WT_p1
+   $thorn_name::WT_p2
+   $thorn_name::WT_p3
+   $thorn_name::WT_p4
+   $thorn_name::WT_p5
+   $thorn_name::WT_p6
+   $thorn_name::WT_p7
+   $thorn_name::WT_dp0
+   $thorn_name::WT_dp1
+   $thorn_name::WT_dp2
+   $thorn_name::WT_dp3
+   $thorn_name::WT_dp4
+   $thorn_name::WT_dp5
+   $thorn_name::WT_dp6
+   $thorn_name::WT_ddp0
+   $thorn_name::WT_ddp1
+   $thorn_name::WT_ddp2
+   $thorn_name::WT_ddp3
+   $thorn_name::WT_ddp4
+   $thorn_name::WT_ddp5
+   $thorn_name::WT_ddp6
+   $thorn_name::WT_dissp5
+   $thorn_name::WT_dissp7
+"
+
+""")
+
+par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
+                                     dr=dr,
+                                     R_inner=R_inner,
+                                     R_outer=R_outer,
+                                     grid_points_per_patch_angular=grid_points_per_patch_angular,
+                                     interpolator_order=interpolator_order,
+                                     shift_edges=shift_edges,
+                                     stagger=stagger,
+                                     ghost_cells=ghost_cells,
+                                     granularity=granularity,
+                                     granularity_boundary=granularity_boundary,
+                                     added_overlap=added_overlap,
+                                     tile_size=tile_size,
+                                     epsdiss=epsdiss,
+                                     output_every_timesteps=output_every_timesteps,
+                                     parfile="$parfile")
+
+with open(filename,'w') as f:
+    f.write(par_string)
