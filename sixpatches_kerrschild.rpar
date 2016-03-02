@@ -4,7 +4,7 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-03-01 14:16:23 (jmiller)>
+# Time-stamp: <2016-03-01 14:55:14 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -44,6 +44,16 @@ try:
     debugging = bool(eval("@DEBUGGING@"))
 except:
     debugging = default_debugging
+# Check-right-hand-side.
+# This flag is only active in debugging
+# mode. If this and the debugging
+# flag are both active,
+# iterates for only one time step.
+default_check_rhs = False
+try:
+    check_rhs = bool(eval("@CHECKRHS@"))
+except:
+    check_rhs = default_check_rhs
 
 # Outer radius.
 # If we're debugging, this can be ~5M.
@@ -197,9 +207,14 @@ rdtheta_min = (pi/2.)*R_inner/grid_points_per_patch_angular
 # Correct formula is: dt = C*rdtheta_min = C*dr
 dt = cfl_factor*dr
 
-# If debugging is active, we only iterate for 3 timesteps
+# If debugging is active, we only iterate for a few timesteps:
+# 3 timesteps if rho = 1. Otherwise 3*rho. Or only 1 if we're
+# checking the right-hand-side.
 if debugging:
-    final_time = 3*dt
+    if check_rhs:
+        final_time = 0
+    else:
+        final_time = 3*rho*dt
 
 # How often we output, in number of timesteps
 # note weird formula is to ensure that multiple resolutions
@@ -210,10 +225,12 @@ if debugging:
 if debugging:
     find_every_timesteps = 0
     output_every_timesteps = 1
+    output_scalar_every_timesteps = 0
     output_1D_every_timesteps = 0
 else:
     output_every_timesteps = int(output_every_M/cfl_factor)*rho*stencil_width
     find_every_timesteps = output_every_timesteps
+    output_scalar_every_timesteps = output_every_timesteps
     output_1D_every_timesteps = 0
 
 # At patch boundaries, interpolation is performed.  For finite
@@ -493,7 +510,7 @@ IOBasic::outInfo_vars       = "
 IOScalar::one_file_per_group = yes
 IOScalar::out_precision       = 17
 
-IOScalar::outScalar_every = $output_every_timesteps
+IOScalar::outScalar_every = $output_scalar_every_timesteps
 CarpetIOScalar::outScalar_reductions = "minimum maximum norm2"
 IOScalar::outScalar_vars  = "
    $thorn_name::ML_confac
@@ -621,7 +638,7 @@ IOHDF5::out1D_vars  = "
    $thorn_name::ML_dtshiftrhs
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
-p   $thorn_name::ML_cons_detg
+   $thorn_name::ML_cons_detg
    $thorn_name::ML_cons_Gamma
    $thorn_name::ML_cons_traceA
 "
@@ -646,8 +663,9 @@ par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
                                      epsdiss=epsdiss,
                                      additional_thorn=additional_thorn,
                                      output_every_timesteps=output_every_timesteps,
-                                     find_every_timesteps=find_every_timestpes,
+                                     find_every_timesteps=find_every_timesteps,
                                      output_1D_every_timesteps=output_1D_every_timesteps,
+                                     output_scalar_every_timesteps=output_scalar_every_timesteps,
                                      geometry_interpolator_name=geometry_interpolator_name,
                                      geometry_interpolator_pars=geometry_interpolator_pars,
                                      surface_interpolator_name=surface_interpolator_name,
