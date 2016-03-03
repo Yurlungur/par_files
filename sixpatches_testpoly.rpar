@@ -4,7 +4,7 @@
 
 # Parameter file for testing the 
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-03-02 17:30:33 (jmiller)>
+# Time-stamp: <2016-03-03 11:32:13 (jmiller)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
 
 # These are generically what you want for a parameter file
@@ -385,6 +385,13 @@ IOHDF5::out3D_vars  = "
    $thorn_name::WT_dp4
    $thorn_name::WT_dp5
    $thorn_name::WT_dp6
+   $thorn_name::WT_p0Trunc
+   $thorn_name::WT_p1Trunc
+   $thorn_name::WT_p2Trunc
+   $thorn_name::WT_p3Trunc
+   $thorn_name::WT_p4Trunc
+   $thorn_name::WT_p5Trunc
+   $thorn_name::WT_p6Trunc
    $thorn_name::WT_ddp0
    $thorn_name::WT_ddp1
    $thorn_name::WT_ddp2
