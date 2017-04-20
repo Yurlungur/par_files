@@ -48,17 +48,56 @@ ActiveThorns = "
 CartGrid3D::type               = "multipatch"
 Coordinates::coordinate_system = "Thornburg04nc"
 
-Coordinates::h_radial            =   1.0/(5*@RHO@)   # (order+1)*n cells
-Coordinates::sphere_inner_radius =   1.0
-Coordinates::sphere_outer_radius = 10.0 # 100
-Coordinates::n_angular           =  5*@RHO@-1   # (order+1)*n-1
+# In code units, G=c=1. In the absence of matter, the only length
+# scale is the the mass of the black hole. People usually like to just
+# set the mass to 1 and then all lengths are in units of black hole
+# mass.  If you add a neutron star, then obviously the matter will
+# provide a natural mass/energy/length scale.
 
+# @RHO@ is a command-line parameter. When you run the simulation,
+# use, say --define RHO 2
+# this will produce 10 grid points in the radial direction per unit length
+Coordinates::h_radial            =   1.0/(5*@RHO@)   # (order+1)*n cells
+Coordinates::sphere_inner_radius =   1.0 # This is the excision radius
+
+# this is the outer boundary. It needs to be very far from the
+# excision radius. The reason is that we don't impose outer boundary
+# conditions very carefully. We use radiative and extrapolation
+# boundary conditions, which are consistent but physically wrong.  A
+# typical strategy is just to move the boundary very far away so that
+# these boundary effects can't propogate to the region of interest by
+# the time the simulation ends.
+Coordinates::sphere_outer_radius = 100 
+
+# Angular resolution. Cubed sphere grids mean we're essentially in
+# spherical coordinates.
+# Note that this is 1/5 the RAW number of grid points,
+# not the density per unit length. You probably want the same 
+# grid point density in the angular direction as the radial direction at
+# the horizon. So you want 2*pi/(5*@RHOTHETA@) to be roughly
+# the same as 1/(5*@RHO@).
+# at large radii, the density per unit length in the angular direction
+# will drop, but that's okay because there shouldn't be any interesting
+# dynamics to resolve there.
+Coordinates::n_angular           =  5*@RHOTHETA@-1   # (order+1)*n-1
+
+# This has to do with where grid points are placed with respect to the
+# edges of the coordinate patches. If you change this, you may have to
+# change (for example) h_radial.
 Coordinates::stagger_patch_boundaries = yes
 Coordinates::stagger_outer_boundaries = yes
 
+# Patch boundaries and analysis routines require interpolation.
+# this is the order of the polynomial used for interpolation.
+# It should be the same order as the finite differences method
+# used for derivatives, which is almost always 4.
 Interpolate2::interpolator_order = 4
 Interpolate2::shift_edges        = no
 
+# The multipatch infrastructure uses a "global" coordinate system,
+# which is spherical coordinates in our case and a "local" coordinate
+# system, which is always Cartesian. This is the Jacobian that
+# transforms between the two.
 Coordinates::store_jacobian            = yes # I need to
 Coordinates::store_inverse_jacobian    = no # Check for runtime errors
 Coordinates::store_jacobian_derivative = no
@@ -68,9 +107,13 @@ GenericFD::jacobian_group            = "Coordinates::jacobian"
 GenericFD::jacobian_derivative_group = "Coordinates::jacobian2"
 
 # OVERLAP
+# How many grid points overlap between cubed sphere regions.
+# This is how the code matches the metric between
+# coordinate patches. Should be the same as ghost_size (see below)
 Coordinates::additional_overlap_size = 3
 
 # BOUNDARY ZONES (needs to be set to three) (also in coordinates thorne)
+# related to the overlap zones.
 Coordinates::patch_boundary_size = 3
 Coordinates::outer_boundary_size = 3
 
@@ -79,11 +122,12 @@ Coordinates::outer_boundary_size = 3
 # Carpet
 #############################################################
 
+# turns on multipatch infrastructure
 Carpet::domain_from_multipatch = yes
+
+# related to parallel communication. Should be the order of finite
+# differences/2 + 1. It's always going to be 3 for you.
 Carpet::ghost_size             = 3
-# not for FD
-#Carpet::granularity            = 5   # (order+1)*m
-#Carpet::granularity_boundary   = 1
 
 Carpet::poison_new_timelevels = no   # does not work with persistent RHS
 
@@ -91,66 +135,118 @@ Carpet::poison_new_timelevels = no   # does not work with persistent RHS
 # Time integration
 #############################################################
 
-#Cactus::terminate       = "time"
-#Cactus::cctk_final_time = @FINAL@
+# evolve this long
+Cactus::terminate       = "time"
+Cactus::cctk_final_time = @FINAL@
 
-Cactus::cctk_itlast = 1
-
-Time::timestep_method = "given"
-#Time::timestep        = 1E-3
+# The timestep can't be too large.
+# essentialy dt should be some fraction (say 1/4)
+# of the smallest number of grid points per unit length
 Time::timestep        = 0.05/@RHO@
 
+# For debugging, you can uncomment this stuff.
+# basically evolve only for a tiny amount of time
+# if you do that, comment out the "terminate"
+# and "final time" parameters above
+#Cactus::cctk_itlast = 1
+#Time::timestep_method = "given"
+#Time::timestep        = 1E-3
 #MethodOfLines::ODE_method             = "Euler"
-MethodOfLines::ODE_method             = "RK4"
 #MethodOfLines::MoL_Intermediate_Steps = 1
+
+# Time integration. RK4 is a good choice
+# if you use RK4 you need these parameters set as they are
+MethodOfLines::ODE_method             = "RK4"
 MethodOfLines::MoL_Intermediate_Steps = 4
 MethodOfLines::MoL_Num_Scratch_Levels = 1
 
 MethodOfLines::init_RHS_zero = yes
-
-MethodOfLines::MoL_NaN_Check = no
-#MethodOfLines::MoL_NaN_Check = yes
+# MethodOfLines::MoL_NaN_Check = no
+MethodOfLines::MoL_NaN_Check = yes
 
 #############################################################
 # ML_BSSN
 #############################################################
 
+# set the initial data to be a black hole
+# in Kerr-Schild coordinates
 ADMBase::initial_data    = "KerrSchild"
 ADMBase::initial_lapse   = "KerrSchild"
 ADMBase::initial_shift   = "KerrSchild"
 ADMBase::initial_dtlapse = "KerrSchild"
 ADMBase::initial_dtshift = "KerrSchild"
 
+# Mass and Spin of the black hole
 KerrSchild::M = 1.0
 KerrSchild::a = 0.0
 
 KerrSchild::exact_method = "KerrSchild"
 
+# Don't change this. This means the code uses
+# the BSSN formulation of the Einstein equations
 ADMBase::evolution_method         = "ML_BSSN"
 ADMBase::lapse_evolution_method   = "ML_BSSN"
 ADMBase::shift_evolution_method   = "ML_BSSN"
 ADMBase::dtlapse_evolution_method = "ML_BSSN"
 ADMBase::dtshift_evolution_method = "ML_BSSN"
 
+# This is related to adaptive mesh refinement
+# You can leave this alone.
 ML_BSSN::timelevels       = 3
 ML_BSSN::other_timelevels = 3
 ML_BSSN::rhs_timelevels   = 1
-#ML_BSSN::rhs_scheduling   = "persistent"
 
+# Details related to the gauge conditions
+
+# This doesn't change much. It has to do with
+# whether you evolve the conformal factor or its logarithm
 ML_BSSN::conformalMethod   = 1      # W
+
+# These parameters have to do with the evolution of the lapse.
+# We use the Bona-Masso family of slicing conditions.
+# roughly:
+# (d/dt) alpha = -harmonicF admalpha^harmonicN A
+# (d/dt) A = (d/dt) K
+# or, if advectLapse is true,
+# (d/dt - Lie_beta) alpha = -harmonicF admalpha^harmonicN A
+# and if fixAdvectionTerms is FALSE
+# (d/dt - Lie_beta) A = (d/dt) K
+# where alpha is the lapse and K is the extrinsic curvature
+# A standard choice is 1+log slicing,
+# which is so-called "singularity avoiding."
+# i.e., the lapse collapses when the curvature is large,
+# which is a useful property for numerical stability.
+# With advectLapse = false and fixAdvectionTerms = true
+# we use a variant developed by Miguel Alcubierre that
+# is compatible with Kerr-Schild coordinates.
 ML_BSSN::harmonicN         = 1      # 1+log
 ML_BSSN::harmonicF         = 2.0    # 1+log
-ML_BSSN::shiftFormulation  = 0      # Gamma driver
-ML_BSSN::shiftGammaCoeff   = 0.75
-ML_BSSN::alphaDriver       = 1.0
-ML_BSSN::betaDriver        = 1.0
-ML_BSSN::evolveA           = 1
-ML_BSSN::evolveB           = 1
-ML_BSSN::advectLapse       = 1
-ML_BSSN::advectShift       = 1
+ML_BSSN::advectLapse       = 0
 ML_BSSN::fixAdvectionTerms = 1
+ML_BSSN::alphaDriver       = 1.0
+ML_BSSN::evolveA           = 1
 ML_BSSN::minimumLapse      = 1.0e-10
 
+# This sets the shift.
+# We use a gamma driver shift. The condition is "symmetry seeking"
+# and "minimal distortion," meaning the coordinate lines
+# align with the symmetries of the spacetime and that
+# the volume element stays roughly constant in time
+# We impose this by dynamically trying to approach
+# Gamma^i = g^{jk} Gamma^i_{jk} = 0
+# We do this by setting
+# (d/dt beta^i) = B^i
+# (d/dt) B^i = alpha^2 shiftGammaCoeff (d/dt) tilde{Gamma}^i - eta B^i
+# where tilde{Gamma} is Gamma, but conformally rescaled
+ML_BSSN::shiftFormulation  = 0      # Gamma driver
+ML_BSSN::shiftGammaCoeff   = 0.75
+ML_BSSN::betaDriver        = 1.0
+ML_BSSN::evolveB           = 1
+ML_BSSN::advectShift       = 0
+
+# Outer boundary condition
+# we make sure outgoing radiation leaves the domain
+# but we extrapolate the other variables
 ML_BSSN::initial_boundary_condition = "extrapolate-gammas"
 ML_BSSN::rhs_boundary_condition     = "NewRad"
 Boundary::radpower                  = 2
@@ -159,6 +255,7 @@ Boundary::radpower                  = 2
 # Analysis
 #############################################################
 
+# This means the code finds the event horizon and tracks it
 AHFinderDirect::find_every = 20*@RHO@
 
 AHFinderDirect::run_at_CCTK_POST_RECOVER_VARIABLES = no
@@ -241,6 +338,14 @@ NaNChecker::verbose = "all"
 #############################################################
 # Output
 #############################################################
+
+# HDF5 is a binary file format. You can read it with h5py in python,
+# for example. ASCII is text files.
+# The ASCII files are designed to work with GNU plot. Personally
+# I prefer HDF5
+
+# Output is slow so outputting often can hurt performance (and easily
+# take up a lot of disk space.)
 
 IO::out_dir = "$parfile"
 

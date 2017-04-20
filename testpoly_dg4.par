@@ -6,10 +6,12 @@ ActiveThorns = "
    CarpetIOBasic
    CarpetIOScalar
    CarpetInterp
+   CarpetInterp2
    CarpetLib
    CarpetReduce
    CartGrid3D
    CoordBase
+   CoordGauge
    Coordinates
    Formaline
    GenericFD
