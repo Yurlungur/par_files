@@ -4,8 +4,26 @@
 
 # Parameter file for single black hole with excision
 # using sixpatches system. Can use DG or FD stencils.
-# Time-stamp: <2016-03-02 17:23:11 (jmiller)>
+# Time-stamp: <2017-11-16 09:04:37 (jonahm)>
 # Author: Jonah Miller (jonah.maxwell.miller@gmail.com)
+
+
+######################################################################
+# Required Parameters
+######################################################################
+# Generically, you need the following parameters
+# -----------------------------------------------
+# | PARAMATER   | DEFAULT |
+# -------------------------
+# | DEBUGGING   | 0       |
+# | CHECKRHS    | 0       |
+# | ORDER       | 3       |
+# | FINAL       | 1       |
+# | RHO         | 5       |
+# | FORMULATION | none    |
+# -------------------------
+######################################################################
+
 
 # These are generically what you want for a parameter file
 # ----------------------------------------------------------------------
@@ -33,7 +51,7 @@ M = 1.   # black hole mass
 a = 0.0 # black hole spin
 
 #Event horizon is at R=2*M.
-R_S = 2.*M
+R_S = M + sqrt(M**2 - a**2)
 
 # Radius of excision. 
 R_inner = 1.*M
@@ -73,9 +91,9 @@ except:
 # derivative order
 # Note that for finite differences,
 # we forbid odd orders.
-# For discontinuous Galerkin, odd orders
-# are fine.
-default_order = 4
+# For discontinuous Galerkin, all orders
+# are fine, but odd orders are preferred
+default_order = 3
 try:
     order = int(eval("@ORDER@"))
 except:
@@ -129,12 +147,25 @@ elif formulation == "DG_BSSN" and using_dissipation:
 else:
     epsdiss = 0
 
-# CFL factors. These are different for finite differences and DG.
-fd_cfl_factor = 0.25 # could be higher?
+# Truncation.
+# This is used only in DGFE.
+# It is a projection-like filter  operation
+# that kills the highest order modes for
+# some variables. Required for stability.
+if formulation == "DG_BSSN":
+    do_truncate = "yes"
+else:
+    do_truncate = "no"
+
+# CFL factors.
+# This has slightly different meaning for
+# FD vs. DG. In DG,
+#  dt = CFL*(h/(p+1)^2) for order p
+# In  FD,
+#  dt = CFL*dx
 # based on experiments for gauge wave
-# for order = 4, translates to 0.05
-#    if rho = 5, dt = 0.01
-dgfe_cfl_factor = min(0.1,0.45/(2*order+1))
+fd_cfl_factor = 0.25 # could be higher?
+dgfe_cfl_factor = 1.0
 
 # How often we output, based on fractions of M
 output_every_M = 0.5*M
@@ -205,7 +236,11 @@ rdtheta_min = (pi/2.)*R_inner/grid_points_per_patch_angular
 
 # timestep size
 # Correct formula is: dt = C*rdtheta_min = C*dr
-dt = cfl_factor*dr
+if formulation == "FD_BSSN":
+    dt = cfl_factor*dr
+else:
+    h = M/rho
+    dt = cfl_factor*h/((order+1)**2)
 
 # If debugging is active, we only iterate for a few timesteps:
 # 3 timesteps if rho = 1. Otherwise 3*rho. Or only 1 if we're
@@ -235,7 +270,7 @@ else:
 
 # At patch boundaries, interpolation is performed.  For finite
 # differences, this interpolation needs to be the same order as the
-# stencil. But for discontinuous Galerkin methods, this no
+# stencil. But for discontinuous Galerkin methods, no
 # interpolation is perfomed. Instead, we just copy from the nearest
 # point. This is because, for a Galerkin method, a patch boundary
 # is just an element boundary.
@@ -257,11 +292,10 @@ else:
 # For finite differences this may or may not change efficiency.
 # For discontinuous Galerkin methods, the tile size MUST
 # be the same as the stencil size, order+1.
-# A value of -1 means Kranc chooses its own tile size.
 if formulation == "DGFE_BSSN":
     tile_size = stencil_width
-else:
-    tile_size = -1
+else: # FD
+    tile_size = order
 
 # We must set the horizon finder parameters very differently, so these
 # settings are separated from the rest of the parameter file.
@@ -319,6 +353,7 @@ ActiveThorns = "
    SymBase
    SystemStatistics
    Time
+   TimerReport
    TmunuBase
 "
 
@@ -395,7 +430,7 @@ MethodOfLines::MoL_Num_Scratch_Levels = 13
 
 MethodOfLines::init_RHS_zero = no
 
-MethodOfLines::MoL_NaN_Check = yes
+MethodOfLines::MoL_NaN_Check = no
 
 #############################################################
 # ML_BSSN
@@ -405,8 +440,9 @@ MethodOfLines::MoL_NaN_Check = yes
 # For finite differences this may or may not change efficiency.
 # For discontinuous Galerkin methods, the tile size MUST
 # be the same as the stencil size, order+1.
-# A value of -1 means Kranc chooses its own tile size.
-$thorn_name::tile_size = $tile_size
+$thorn_name::tile_size_i = $tile_size
+$thorn_name::tile_size_j = $tile_size
+$thorn_name::tile_size_k = $tile_size
 
 ADMBase::initial_data    = "KerrSchild"
 ADMBase::initial_lapse   = "KerrSchild"
@@ -425,8 +461,10 @@ ADMBase::shift_evolution_method   = "$thorn_name"
 ADMBase::dtlapse_evolution_method = "$thorn_name"
 ADMBase::dtshift_evolution_method = "$thorn_name"
 
+$thorn_name::do_truncate = $do_truncate
+
 $thorn_name::initial_boundary_condition     = "extrapolate"
-$thorn_name::boundary_condition             = "extrapolate"
+$thorn_name::boundary_condition             = "extrapolate" # newrad doesn't work
 $thorn_name::derivatives_boundary_condition = "extrapolate"
 $thorn_name::rhs_boundary_condition         = "none"
 
@@ -513,7 +551,6 @@ IOScalar::out_precision       = 17
 IOScalar::outScalar_every = $output_scalar_every_timesteps
 CarpetIOScalar::outScalar_reductions = "minimum maximum norm2"
 IOScalar::outScalar_vars  = "
-   $thorn_name::ML_confac
    $thorn_name::ML_trace_curv
    $thorn_name::ML_Ham
    $thorn_name::ML_mom
@@ -525,7 +562,6 @@ IOScalar::outScalar_vars  = "
    $thorn_name::ML_shift
    $thorn_name::ML_dtlapse
    $thorn_name::ML_dtshift
-   $thorn_name::ML_confacrhs
    $thorn_name::ML_metricrhs
    $thorn_name::ML_Gammarhs
    $thorn_name::ML_trace_curvrhs
@@ -557,34 +593,6 @@ IOHDF5::out3D_vars  = "
    grid::coordinates
    CarpetReduce::weight
    Coordinates::jacobian
-   $thorn_name::ML_volume_form
-   $thorn_name::ML_Ham
-   $thorn_name::ML_mom
-   $thorn_name::ML_confac
-   $thorn_name::ML_confacrhs
-   $thorn_name::ML_lapserhs
-   $thorn_name::ML_trace_curv
-   $thorn_name::ML_trace_curvrhs
-   $thorn_name::ML_metric
-   $thorn_name::ML_Gamma
-   $thorn_name::ML_trace_curv
-   $thorn_name::ML_curv
-   $thorn_name::ML_lapse
-   $thorn_name::ML_shift
-   $thorn_name::ML_dtlapse
-   $thorn_name::ML_dtshift
-   $thorn_name::ML_confacrhs
-   $thorn_name::ML_metricrhs
-   $thorn_name::ML_Gammarhs
-   $thorn_name::ML_trace_curvrhs
-   $thorn_name::ML_curvrhs
-   $thorn_name::ML_lapserhs
-   $thorn_name::ML_shiftrhs
-   $thorn_name::ML_dtlapserhs
-   $thorn_name::ML_dtshiftrhs
-   $thorn_name::ML_cons_detg
-   $thorn_name::ML_cons_Gamma
-   $thorn_name::ML_cons_traceA
    ADMBase::metric
    ADMBase::curv
    ADMBase::lapse
@@ -597,6 +605,27 @@ IOHDF5::out3D_vars  = "
    KerrSchild::shift_exact
    KerrSchild::dtlapse_exact
    KerrSchild::dtshift_exact
+   $thorn_name::ML_metric
+   $thorn_name::ML_Gamma
+   $thorn_name::ML_trace_curv
+   $thorn_name::ML_curv
+   $thorn_name::ML_lapse
+   $thorn_name::ML_shift
+   $thorn_name::ML_dtlapse
+   $thorn_name::ML_dtshift
+   $thorn_name::ML_Ham
+   $thorn_name::ML_mom
+   $thorn_name::ML_metricrhs
+   $thorn_name::ML_Gammarhs
+   $thorn_name::ML_trace_curvrhs
+   $thorn_name::ML_curvrhs
+   $thorn_name::ML_lapserhs
+   $thorn_name::ML_shiftrhs
+   $thorn_name::ML_dtlapserhs
+   $thorn_name::ML_dtshiftrhs
+   $thorn_name::ML_cons_detg
+   $thorn_name::ML_cons_Gamma
+   $thorn_name::ML_cons_traceA
 "
 
 IOHDF5::out1D_every = $output_1D_every_timesteps
@@ -616,7 +645,6 @@ IOHDF5::out1D_vars  = "
    KerrSchild::shift_exact
    KerrSchild::dtlapse_exact
    KerrSchild::dtshift_exact
-   $thorn_name::ML_confac
    $thorn_name::ML_metric
    $thorn_name::ML_Gamma
    $thorn_name::ML_trace_curv
@@ -625,7 +653,8 @@ IOHDF5::out1D_vars  = "
    $thorn_name::ML_shift
    $thorn_name::ML_dtlapse
    $thorn_name::ML_dtshift
-   $thorn_name::ML_confacrhs
+   $thorn_name::ML_Ham
+   $thorn_name::ML_mom
    $thorn_name::ML_metricrhs
    $thorn_name::ML_Gammarhs
    $thorn_name::ML_trace_curvrhs
@@ -634,12 +663,16 @@ IOHDF5::out1D_vars  = "
    $thorn_name::ML_shiftrhs
    $thorn_name::ML_dtlapserhs
    $thorn_name::ML_dtshiftrhs
-   $thorn_name::ML_Ham
-   $thorn_name::ML_mom
    $thorn_name::ML_cons_detg
    $thorn_name::ML_cons_Gamma
    $thorn_name::ML_cons_traceA
 "
+
+TimerReport::out_every                  = $output_scalar_every_timesteps
+TimerReport::out_filename               = "TimerReport"
+TimerReport::output_all_timers_together = yes
+TimerReport::output_all_timers_readable = yes
+TimerReport::n_top_timers               = 50 
 """)
 
 par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
@@ -659,6 +692,7 @@ par_string = PARAM_STRING.substitute(thorn_name=thorn_name,
                                      tile_size=tile_size,
                                      M=M,a=a,
                                      epsdiss=epsdiss,
+                                     do_truncate = do_truncate,
                                      additional_thorn=additional_thorn,
                                      output_every_timesteps=output_every_timesteps,
                                      find_every_timesteps=find_every_timesteps,
